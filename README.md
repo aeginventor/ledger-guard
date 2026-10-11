@@ -55,6 +55,8 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 ./gradlew test
 ```
 
+로컬 쿠버네티스(kind)에 올리는 명령과 실측 결과는 [docs/evaluation.md](docs/evaluation.md) 5절에 있습니다. 이미지는 `ghcr.io/aeginventor/ledger-guard:latest`로도 받을 수 있습니다(main 푸시마다 CI가 올립니다).
+
 ## API 요약
 
 | 메서드와 경로 | 설명 |
@@ -95,21 +97,24 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 
 ## 검증
 
-2026년 10월 11일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 100개가 모두 통과했습니다. 규칙 단위 테스트 56개, 사업자등록번호 체크섬 13개, 엔진 5개, fixture 작성기 7개, OpenAI 작성기(모의 서버) 6개, 작성기 선택 1개, API 통합 테스트 8개, 골든셋 평가 3개, 컨텍스트 로딩 1개입니다.
+2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 122개가 모두 통과했습니다. 규칙 단위 테스트 63개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 19개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표를 더하며 22개가 늘었습니다.
 
-골든셋 평가 결과는 아래와 같습니다. 재현 명령과 상세 표는 [docs/evaluation.md](docs/evaluation.md)에 있습니다.
+골든셋과 변이 평가 결과는 아래와 같습니다. 재현 명령과 상세 표는 [docs/evaluation.md](docs/evaluation.md)에 있습니다.
 
 | 세트 | 건수 | 결과 |
 |---|---|---|
 | 올바른 전표 `valid_vouchers.json` | 27 | PASS 27건, 거짓 양성 0건 |
-| 결함 전표 `faulty_vouchers.json` | 26 | 기대 코드 전부 검출 26건, 검출 코드가 기대와 정확히 일치 26건 |
+| 결함 전표 `faulty_vouchers.json` | 27 | 기대 코드 전부 검출 27건, 검출 코드가 기대와 정확히 일치 27건. R01부터 R12까지 전부 최소 한 번 |
 | 규칙이 못 잡는 결함 `semantic_misses.json` | 5 | PASS 5건. 차대와 계정 유효성은 맞지만 계정 선택이 틀린 전표를 현재 규칙은 통과시킨다 |
+| 변이 평가 (정상 27건에 연산자 15종) | 338 | 결함 변이 311건 중 311건 검출. 같은 유형 안에서 계정만 바꾼 의미 변이 27건은 전부 통과 |
 
-같은 날 `docker compose up --build -d`로 PostgreSQL 16.15와 앱을 띄우고 `scripts/smoke.sh`로 초안 생성, 저장(id 1, DRAFT), 승인(POSTED), 차대 불일치 전표 저장(id 2, REJECTED)과 승인 시도(HTTP 409), 시산표(총차변 110,000원, 총대변 110,000원, balanced true)를 확인했습니다. Flyway 마이그레이션 2개가 PostgreSQL에 적용되었고 계정과목 30건이 들어갔습니다.
+손으로 만든 결함 전표는 규칙과 같은 AI 도구가 결함의 종류와 위치를 골라 순환 검증이 됩니다. 변이 평가는 결함의 위치를 기계가 고르므로 두 번째 측정입니다. 연산자 자체는 같은 AI가 설계했으므로 완전히 독립적인 검증은 아닙니다.
 
-`kubectl apply --dry-run=client --validate=false -f k8s/`는 kubectl v1.36.3에서 통과했습니다(Deployment, Service 2개, ConfigMap, StatefulSet, Secret). 실제 클러스터에는 배포하지 않았으므로 K8s 매니페스트는 문법과 구조만 확인한 상태입니다.
+`docker compose up --build -d`로 PostgreSQL 16.15와 앱을 띄우고 `scripts/smoke.sh`로 초안 생성, 저장(DRAFT), 승인(POSTED), 차대 불일치 전표 저장(REJECTED)과 승인 시도(HTTP 409), 시산표(총차변 110,000원, 총대변 110,000원, balanced true)를 확인했습니다. 10월 12일에는 역분개(원전표 REVERSED, 시산표 잔액 0)와 작성자의 자기 승인 409까지 같은 방법으로 확인했습니다. Flyway 마이그레이션 3개가 적용되었고 계정과목 30건이 들어갔습니다.
 
-GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행합니다. 첫 실행은 Linux의 시각 정밀도 차이로 실패했고 수정 뒤 [통과했습니다](https://github.com/aeginventor/ledger-guard/actions/runs/38120768628). 전체 목록은 [Actions](https://github.com/aeginventor/ledger-guard/actions)에 있습니다.
+쿠버네티스는 10월 11일에 `kubectl apply --dry-run=client`만 통과시켰고, 10월 12일에 kind 로컬 클러스터에 실제로 배포했습니다. 1차는 `runAsNonRoot`와 이미지의 문자 사용자명이 충돌해 컨테이너가 뜨지 못했고(UID를 10001로 고정), 2차는 앱이 DB보다 먼저 떠서 두 번 재시작했습니다(DB 포트를 기다리는 초기화 컨테이너 추가). 3차는 재시작 0회, DB Ready 뒤 23초에 앱 Ready, smoke 통과, 롤링 업데이트 21초였습니다. 둘 다 dry-run이 잡지 못한 문제입니다. 운영 클러스터에는 배포하지 않았습니다.
+
+GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행하고, main에 push되면 이미지를 GHCR에 올립니다. 첫 실행은 Linux의 시각 정밀도 차이로 실패했고 수정 뒤 [통과했습니다](https://github.com/aeginventor/ledger-guard/actions/runs/38120768628). 전체 목록은 [Actions](https://github.com/aeginventor/ledger-guard/actions)에 있습니다.
 
 ## 한계와 다음 작업
 
