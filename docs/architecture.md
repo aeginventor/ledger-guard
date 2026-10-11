@@ -125,6 +125,16 @@ erDiagram
         varchar message
         varchar basis
     }
+    voucher_event {
+        bigint id PK
+        bigint voucher_id FK
+        varchar event_type "CREATED APPROVED REVERSED"
+        varchar from_status
+        varchar to_status
+        varchar actor
+        varchar reason
+        timestamp occurred_at
+    }
     accounting_period {
         varchar yyyymm PK
         boolean closed
@@ -144,6 +154,7 @@ erDiagram
     voucher ||--|{ voucher_line : "has"
     voucher |o--o| voucher : "reversal_of / reversed_by"
     voucher ||--o{ validation_finding : "has"
+    voucher ||--o{ voucher_event : "history"
     voucher ||--o{ ledger_entry : "posted as"
     account ||--o{ ledger_entry : "aggregated into"
 ```

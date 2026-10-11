@@ -137,4 +137,32 @@ class ReversalIntegrationTest extends ApiTestSupport {
         postJson("/api/vouchers/999999/reverse",
                 Map.of("preparer", "김작성", "approver", "박승인", "reason", "없는 전표"), 404);
     }
+
+    @Test
+    void eventsRecordWhoDidWhatAndFailedApprovalsLeaveNoTrace() throws Exception {
+        long id = postJson("/api/vouchers", purchaseVoucher("이력상사"), 201).get("id").asLong();
+        postJson("/api/vouchers/" + id + "/approve", Map.of("approver", "김작성"), 409); // R12, 롤백
+        postJson("/api/vouchers/" + id + "/approve", Map.of("approver", "박승인"), 200);
+        JsonNode reversal = postJson("/api/vouchers/" + id + "/reverse",
+                Map.of("preparer", "김작성", "approver", "박승인", "reason", "이력 테스트 역분개"), 201);
+        long reversalId = reversal.get("id").asLong();
+
+        JsonNode events = getJson("/api/vouchers/" + id + "/events", 200);
+        assertThat(events).hasSize(3);
+        assertThat(events.get(0).get("type").asText()).isEqualTo("CREATED");
+        assertThat(events.get(0).get("actor").asText()).isEqualTo("김작성");
+        assertThat(events.get(0).get("toStatus").asText()).isEqualTo("DRAFT");
+        assertThat(events.get(1).get("type").asText()).isEqualTo("APPROVED");
+        assertThat(events.get(1).get("fromStatus").asText()).isEqualTo("DRAFT");
+        assertThat(events.get(1).get("toStatus").asText()).isEqualTo("POSTED");
+        assertThat(events.get(1).get("actor").asText()).isEqualTo("박승인");
+        assertThat(events.get(2).get("type").asText()).isEqualTo("REVERSED");
+        assertThat(events.get(2).get("reason").asText()).isEqualTo("이력 테스트 역분개");
+
+        JsonNode reversalEvents = getJson("/api/vouchers/" + reversalId + "/events", 200);
+        assertThat(reversalEvents).hasSize(2);
+        assertThat(reversalEvents.get(0).get("type").asText()).isEqualTo("CREATED");
+        assertThat(reversalEvents.get(1).get("type").asText()).isEqualTo("APPROVED");
+        getJson("/api/vouchers/999999/events", 404);
+    }
 }

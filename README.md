@@ -67,6 +67,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 | `POST /api/vouchers` | 전표 저장. 판정 결과에 따라 DRAFT, REVIEW, REJECTED. FAIL도 기록으로 남김 |
 | `GET /api/vouchers/{id}`, `GET /api/vouchers?status=&month=` | 조회와 목록 |
 | `POST /api/vouchers/{id}/approve` | 재검증 뒤 승인과 전기. FAIL은 409, REVIEW는 사유가 없으면 409, 작성자가 자기 전표를 승인하면 R12로 409, 같은 전표를 동시에 승인하면 늦은 쪽이 409 |
+| `GET /api/vouchers/{id}/events` | 상태 이력. 누가 언제 작성, 승인, 역분개했는지 |
 | `POST /api/vouchers/{id}/reverse` | 역분개. 전기된 전표의 차대를 뒤집은 전표를 만들어 바로 전기하고 원전표를 REVERSED로 바꾼다. 작성자, 승인자, 사유 필수 |
 | `POST /api/periods/{yyyymm}/close` | 기간 마감 |
 | `GET /api/reports/trial-balance?month=2026-10&scope=month` | 합계잔액시산표. `scope=month`(기본)는 그 달에 전기된 항목만, `scope=ytd`는 그 해 1월부터의 누계이며 행마다 기초 잔액과 당월 발생액을 준다. `balanced` 필드로 총차변과 총대변 일치 여부 표시 |
@@ -100,7 +101,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 
 ## 검증
 
-2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 130개가 모두 통과했습니다. 규칙 단위 테스트 68개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 21개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표, 증빙 일치 규칙, 시산표 누계, 규칙 목록을 더하며 29개가 늘었습니다.
+2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 131개가 모두 통과했습니다. 규칙 단위 테스트 68개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 23개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표, 증빙 일치 규칙, 시산표 누계, 규칙 목록을 더하며 29개가 늘었습니다.
 
 골든셋과 변이 평가 결과는 아래와 같습니다. 재현 명령과 상세 표는 [docs/evaluation.md](docs/evaluation.md)에 있습니다.
 

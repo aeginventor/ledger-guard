@@ -18,6 +18,7 @@ import io.github.aeginventor.ledgerguard.validation.ValidationResult;
 import io.github.aeginventor.ledgerguard.validation.VoucherData;
 import io.github.aeginventor.ledgerguard.voucher.dto.ApproveRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.ReverseRequest;
+import io.github.aeginventor.ledgerguard.voucher.dto.VoucherEventResponse;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherLineRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherResponse;
@@ -41,17 +42,19 @@ public class VoucherService {
     private final VoucherRepository voucherRepository;
     private final AccountRepository accountRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final VoucherEventRepository eventRepository;
     private final ValidationContextFactory contextFactory;
     private final ValidationEngine engine;
     private final ValidationMetrics metrics;
     private final Clock clock;
 
     public VoucherService(VoucherRepository voucherRepository, AccountRepository accountRepository,
-            LedgerEntryRepository ledgerEntryRepository, ValidationContextFactory contextFactory,
-            ValidationEngine engine, ValidationMetrics metrics, Clock clock) {
+            LedgerEntryRepository ledgerEntryRepository, VoucherEventRepository eventRepository,
+            ValidationContextFactory contextFactory, ValidationEngine engine, ValidationMetrics metrics, Clock clock) {
         this.voucherRepository = voucherRepository;
         this.accountRepository = accountRepository;
         this.ledgerEntryRepository = ledgerEntryRepository;
+        this.eventRepository = eventRepository;
         this.contextFactory = contextFactory;
         this.engine = engine;
         this.metrics = metrics;
@@ -75,7 +78,16 @@ public class VoucherService {
         }
         voucher.replaceFindings(toEntities(result), result.overall());
         voucher.changeStatus(statusFor(result.overall()));
-        return toResponse(voucherRepository.save(voucher));
+        Voucher saved = voucherRepository.save(voucher);
+        eventRepository.save(new VoucherEvent(saved.getId(), VoucherEvent.Type.CREATED, null, saved.getStatus(),
+                request.preparer(), null, saved.getCreatedAt()));
+        return toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public List<VoucherEventResponse> events(Long id) {
+        load(id);
+        return eventRepository.findByVoucherIdOrderByIdAsc(id).stream().map(VoucherEventResponse::from).toList();
     }
 
     @Transactional(readOnly = true)
@@ -145,8 +157,13 @@ public class VoucherService {
         reversal.replaceFindings(toEntities(saveResult), saveResult.overall());
         reversal.changeStatus(statusFor(saveResult.overall()));
         reversal = voucherRepository.save(reversal);
+        eventRepository.save(new VoucherEvent(reversal.getId(), VoucherEvent.Type.CREATED, null, reversal.getStatus(),
+                request.preparer(), "역분개 전표 생성, 원전표 " + original.getId(), reversal.getCreatedAt()));
         post(reversal, request.approver(), request.reason());
+        VoucherStatus before = original.getStatus();
         original.markReversed(reversal.getId());
+        eventRepository.save(new VoucherEvent(original.getId(), VoucherEvent.Type.REVERSED, before,
+                VoucherStatus.REVERSED, request.approver(), request.reason(), now()));
         return toResponse(reversal);
     }
 
@@ -162,11 +179,14 @@ public class VoucherService {
         }
         voucher.replaceFindings(toEntities(result), result.overall());
         LocalDateTime now = now();
+        VoucherStatus before = voucher.getStatus();
         voucher.markPosted(approver, reason, now);
         for (VoucherLine line : voucher.getLines()) {
             ledgerEntryRepository.save(new LedgerEntry(voucher.getId(), line.getLineNo(), line.getAccountCode(),
                     line.getSide(), line.getAmount(), voucher.getVoucherDate(), now));
         }
+        eventRepository.save(new VoucherEvent(voucher.getId(), VoucherEvent.Type.APPROVED, before, VoucherStatus.POSTED,
+                approver, reason, now));
     }
 
     /** DB와 JVM의 시각 정밀도가 달라 응답이 흔들리지 않도록 밀리초로 자른다. */

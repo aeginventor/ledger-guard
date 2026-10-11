@@ -5,6 +5,7 @@ import io.github.aeginventor.ledgerguard.voucher.dto.ApproveRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.DraftRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.DraftResponse;
 import io.github.aeginventor.ledgerguard.voucher.dto.ReverseRequest;
+import io.github.aeginventor.ledgerguard.voucher.dto.VoucherEventResponse;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -58,6 +59,12 @@ public class VoucherController {
     public List<VoucherResponse> list(@RequestParam(required = false) VoucherStatus status,
             @RequestParam(required = false) String month) {
         return voucherService.search(status, month);
+    }
+
+    @GetMapping("/{id}/events")
+    @Operation(summary = "전표 상태 이력", description = "작성, 승인과 전기, 역분개로 상쇄된 기록을 시간순으로. 409로 끝난 승인은 롤백되어 남지 않는다.")
+    public List<VoucherEventResponse> events(@PathVariable Long id) {
+        return voucherService.events(id);
     }
 
     @PostMapping("/{id}/reverse")

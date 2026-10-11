@@ -130,6 +130,20 @@ HTTP 201. 응답은 역분개 전표이며 `reversalOfId`가 원전표를 가리
 
 POSTED가 아닌 전표, 이미 역분개된 전표, 마감된 달로의 역분개(R07), 작성자와 승인자가 같은 역분개(R12)는 모두 409이고 아무것도 저장되지 않습니다.
 
+## 전표 상태 이력
+
+```bash
+curl -s http://localhost:8080/api/vouchers/1/events
+```
+
+```json
+[{"id":1,"type":"CREATED","fromStatus":null,"toStatus":"DRAFT","actor":"김작성","reason":null,"occurredAt":"..."},
+ {"id":2,"type":"APPROVED","fromStatus":"DRAFT","toStatus":"POSTED","actor":"박승인","reason":null,"occurredAt":"..."},
+ {"id":3,"type":"REVERSED","fromStatus":"POSTED","toStatus":"REVERSED","actor":"박승인","reason":"거래처 착오, 전표 취소","occurredAt":"..."}]
+```
+
+409로 끝난 승인은 롤백되어 이력에 남지 않습니다.
+
 ## 기간 마감
 
 ```bash

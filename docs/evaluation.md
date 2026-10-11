@@ -8,7 +8,7 @@
 ./gradlew test
 ```
 
-결과: 테스트 130개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계와 규칙 목록을 더하면서 29개가 늘었습니다.
+결과: 테스트 131개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계와 규칙 목록을 더하면서 29개가 늘었습니다.
 
 | 테스트 클래스 | 개수 | 내용 |
 |---|---|---|
@@ -21,7 +21,7 @@
 | api.VoucherFlowIntegrationTest | 2 | 초안 → 저장 → 승인 → 시산표, fixture 없는 설명의 R11 FAIL |
 | api.ApprovalRejectionIntegrationTest | 5 | FAIL 전표 승인 409, REVIEW 전표 사유 필수, 작성자 자기 승인 R12 409, 작성자 없는 전표 400, 404와 400 |
 | api.ClosedPeriodIntegrationTest | 1 | 기간 마감 뒤 승인 409와 저장 REJECTED |
-| api.ReversalIntegrationTest | 5 | 역분개 차대 반전과 즉시 전기와 시산표 상쇄, POSTED만 역분개, 역분개의 R12, 마감 달 역분개 R07, 요청 검증 |
+| api.ReversalIntegrationTest | 6 | 역분개 차대 반전과 즉시 전기와 시산표 상쇄, POSTED만 역분개, 역분개의 R12, 마감 달 역분개 R07, 요청 검증, 상태 이력(실패한 승인은 안 남음) |
 | api.ConcurrentApprovalIntegrationTest | 3 | 같은 전표 동시 승인 2건 중 200과 409 각 1건, 원장 라인 3개 (3회 반복) |
 | voucher.OptimisticLockTest | 1 | 트랜잭션 A가 version 0을 읽은 사이 B가 커밋하면 A는 OptimisticLockingFailureException |
 | api.HealthAndDocsIntegrationTest | 5 | readiness와 liveness, 계정 30건, OpenAPI, Prometheus 카운터와 AOP 타이머, 규칙 목록 13개, 정적 UI |
