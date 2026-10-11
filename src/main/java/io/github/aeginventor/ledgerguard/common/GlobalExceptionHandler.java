@@ -3,6 +3,7 @@ package io.github.aeginventor.ledgerguard.common;
 import io.github.aeginventor.ledgerguard.voucher.dto.ValidationResultResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -24,6 +25,12 @@ public class GlobalExceptionHandler {
         ValidationResultResponse validation = e.getValidation() == null ? null
                 : ValidationResultResponse.from(e.getValidation());
         return build(HttpStatus.CONFLICT, e.getMessage(), null, validation);
+    }
+
+    /** 낙관적 락 충돌. 같은 전표를 다른 요청이 먼저 바꿨다. 재시도는 호출자가 다시 조회한 뒤 결정한다. */
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> optimisticLock(OptimisticLockingFailureException e) {
+        return build(HttpStatus.CONFLICT, "다른 요청이 먼저 이 전표를 바꿨다. 다시 조회한 뒤 시도해야 한다", null, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
