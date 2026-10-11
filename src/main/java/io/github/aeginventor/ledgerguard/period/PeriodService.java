@@ -3,6 +3,7 @@ package io.github.aeginventor.ledgerguard.period;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +25,7 @@ public class PeriodService {
         AccountingPeriod period = repository.findById(PeriodKey.of(month))
                 .orElseGet(() -> new AccountingPeriod(PeriodKey.of(month)));
         if (!period.isClosed()) {
-            period.close(LocalDateTime.now(clock));
+            period.close(LocalDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS));
         }
         return PeriodResponse.from(repository.save(period));
     }

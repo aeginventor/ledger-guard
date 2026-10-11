@@ -24,6 +24,7 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -60,7 +61,7 @@ public class VoucherService {
 
         Voucher voucher = new Voucher(request.voucherDate(), request.description(), request.counterpartyName(),
                 request.counterpartyBizNo(), request.evidenceType(), request.vatType(), request.supplyAmount(),
-                request.drafterOrManual(), LocalDateTime.now(clock));
+                request.drafterOrManual(), now());
         int lineNo = 1;
         for (VoucherLineRequest line : request.lines()) {
             voucher.addLine(new VoucherLine(lineNo++, line.accountCode(), line.side(), toStoredAmount(line.amount()),
@@ -110,13 +111,18 @@ public class VoucherService {
             throw new ConflictException("REVIEW 판정 전표는 승인 사유(reason)를 적어야 승인할 수 있다", result);
         }
         voucher.replaceFindings(toEntities(result), result.overall());
-        LocalDateTime now = LocalDateTime.now(clock);
+        LocalDateTime now = now();
         voucher.markPosted(request.approver(), request.reason(), now);
         for (VoucherLine line : voucher.getLines()) {
             ledgerEntryRepository.save(new LedgerEntry(voucher.getId(), line.getLineNo(), line.getAccountCode(),
                     line.getSide(), line.getAmount(), voucher.getVoucherDate(), now));
         }
         return toResponse(voucher);
+    }
+
+    /** DB와 JVM의 시각 정밀도가 달라 응답이 흔들리지 않도록 밀리초로 자른다. */
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock).truncatedTo(ChronoUnit.MILLIS);
     }
 
     static VoucherStatus statusFor(Overall overall) {

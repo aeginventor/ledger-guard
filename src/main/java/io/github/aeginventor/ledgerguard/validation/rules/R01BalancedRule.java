@@ -38,7 +38,7 @@ public class R01BalancedRule implements ValidationRule {
             return List.of();
         }
         return List.of(Finding.fail(CODE,
-                "차변 합계 " + RuleSupport.won(debit) + "와 대변 합계 " + RuleSupport.won(credit) + "이 다르다",
+                "차변 합계 " + RuleSupport.won(debit) + "과 대변 합계 " + RuleSupport.won(credit) + "이 다르다",
                 "복식부기 대차평균의 원리"));
     }
 }
