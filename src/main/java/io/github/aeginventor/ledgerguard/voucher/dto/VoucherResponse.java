@@ -23,6 +23,7 @@ public record VoucherResponse(
         DrafterType drafter,
         List<VoucherLineResponse> lines,
         ValidationResultResponse validation,
+        String preparer,
         String approver,
         String approvalReason,
         LocalDateTime createdAt,
@@ -44,6 +45,7 @@ public record VoucherResponse(
                         .map(line -> VoucherLineResponse.from(line, accountName.apply(line.getAccountCode())))
                         .toList(),
                 ValidationResultResponse.from(voucher),
+                voucher.getPreparer(),
                 voucher.getApprover(),
                 voucher.getApprovalReason(),
                 voucher.getCreatedAt(),

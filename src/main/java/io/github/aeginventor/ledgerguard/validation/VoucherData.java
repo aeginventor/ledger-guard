@@ -18,10 +18,23 @@ public record VoucherData(
         EvidenceType evidenceType,
         VatType vatType,
         Long supplyAmount,
-        List<LineData> lines) {
+        List<LineData> lines,
+        String preparer,
+        Long reversalOfId) {
 
     public VoucherData {
         lines = lines == null ? List.of() : List.copyOf(lines);
+    }
+
+    /** 작성자와 역분개 참조가 없는 전표. 규칙 단위 테스트와 초안 단계에서 쓴다. */
+    public VoucherData(LocalDate voucherDate, String description, String counterpartyName, String counterpartyBizNo,
+            EvidenceType evidenceType, VatType vatType, Long supplyAmount, List<LineData> lines) {
+        this(voucherDate, description, counterpartyName, counterpartyBizNo, evidenceType, vatType, supplyAmount, lines,
+                null, null);
+    }
+
+    public boolean isReversal() {
+        return reversalOfId != null;
     }
 
     public BigDecimal sum(Side side) {

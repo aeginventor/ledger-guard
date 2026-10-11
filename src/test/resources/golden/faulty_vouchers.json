@@ -58,6 +58,8 @@
     {"id": "F25", "title": "세금계산서 사업자번호 9자리", "expectedCodes": ["R06"], "voucher": {"voucherDate": "2026-10-05", "description": "상품 매입", "counterpartyName": "가상도매", "counterpartyBizNo": "123-45-6789", "evidenceType": "TAX_INVOICE", "vatType": "TAXABLE", "supplyAmount": 2000000,
       "lines": [{"accountCode": "146", "side": "DEBIT", "amount": 2000000}, {"accountCode": "135", "side": "DEBIT", "amount": 200000}, {"accountCode": "251", "side": "CREDIT", "amount": 2200000}]}},
     {"id": "F26", "title": "면세 매입에 부가세예수금 차변", "expectedCodes": ["R04", "R05"], "voucher": {"voucherDate": "2026-10-07", "description": "직원 교육용 도서 구입", "counterpartyName": "가상서점", "evidenceType": "CASH_RECEIPT", "vatType": "EXEMPT", "supplyAmount": 45000,
-      "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 45000}, {"accountCode": "255", "side": "DEBIT", "amount": 4500}, {"accountCode": "101", "side": "CREDIT", "amount": 49500}]}}
-  ]
+      "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 45000}, {"accountCode": "255", "side": "DEBIT", "amount": 4500}, {"accountCode": "101", "side": "CREDIT", "amount": 49500}]}},
+    {"id": "F27", "title": "작성자가 자기 전표를 승인", "stage": "APPROVE", "expectedCodes": ["R12"], "approver": "김작성", "voucher": {"voucherDate": "2026-10-02", "description": "사무용품 구입", "counterpartyName": "가상문구셋", "evidenceType": "CARD", "vatType": "TAXABLE", "supplyAmount": 100000, "preparer": "김작성",
+      "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 100000}, {"accountCode": "135", "side": "DEBIT", "amount": 10000}, {"accountCode": "101", "side": "CREDIT", "amount": 110000}]}}
+]
 }

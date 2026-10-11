@@ -60,6 +60,9 @@ public class Voucher {
     @Column(name = "validation_overall", length = 10, nullable = false)
     private Overall validationOverall;
 
+    @Column(name = "preparer", length = 100)
+    private String preparer;
+
     @Column(name = "approver", length = 100)
     private String approver;
 
@@ -85,8 +88,9 @@ public class Voucher {
 
     public Voucher(LocalDate voucherDate, String description, String counterpartyName, String counterpartyBizNo,
             EvidenceType evidenceType, VatType vatType, Long supplyAmount, DrafterType drafter,
-            LocalDateTime createdAt) {
+            String preparer, LocalDateTime createdAt) {
         this.voucherDate = voucherDate;
+        this.preparer = preparer;
         this.description = description;
         this.counterpartyName = counterpartyName;
         this.counterpartyBizNo = counterpartyBizNo;
@@ -173,6 +177,10 @@ public class Voucher {
 
     public Overall getValidationOverall() {
         return validationOverall;
+    }
+
+    public String getPreparer() {
+        return preparer;
     }
 
     public String getApprover() {

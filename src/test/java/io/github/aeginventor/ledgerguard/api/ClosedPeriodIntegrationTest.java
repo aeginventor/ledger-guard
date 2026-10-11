@@ -20,6 +20,7 @@ class ClosedPeriodIntegrationTest extends ApiTestSupport {
         return Map.of(
                 "voucherDate", DATE.toString(),
                 "description", "급여 지급",
+                "preparer", "김작성",
                 "counterpartyName", counterparty,
                 "evidenceType", "NONE",
                 "vatType", "NA",

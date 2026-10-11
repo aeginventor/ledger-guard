@@ -34,6 +34,11 @@ public class ValidationContextFactory {
     }
 
     public ValidationContext create(VoucherData voucher, Stage stage, List<String> draftProblems, Long excludeVoucherId) {
+        return create(voucher, stage, draftProblems, excludeVoucherId, null);
+    }
+
+    public ValidationContext create(VoucherData voucher, Stage stage, List<String> draftProblems, Long excludeVoucherId,
+            String approver) {
         Map<String, Account> accounts = accountRepository.findAll().stream()
                 .collect(Collectors.toMap(Account::getCode, Function.identity()));
         Function<String, Optional<Account>> lookup = code -> Optional.ofNullable(accounts.get(code));
@@ -47,15 +52,16 @@ public class ValidationContextFactory {
                 duplicateChecker,
                 LocalDate.now(clock),
                 stage,
-                draftProblems);
+                draftProblems,
+                approver);
     }
 
     public ValidationContext forSave(VoucherData voucher) {
         return create(voucher, Stage.SAVE, List.of(), null);
     }
 
-    public ValidationContext forApproval(VoucherData voucher, Voucher self) {
-        return create(voucher, Stage.SAVE, List.of(), self.getId());
+    public ValidationContext forApproval(VoucherData voucher, Voucher self, String approver) {
+        return create(voucher, Stage.APPROVE, List.of(), self.getId(), approver);
     }
 
     public ValidationContext forDraft(VoucherData voucher, List<String> draftProblems) {

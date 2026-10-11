@@ -114,7 +114,7 @@ class GoldenSetEvaluationTest {
         Set<String> coveredCodes = faulty.stream().flatMap(e -> e.goldenCase().expectedCodes().stream())
                 .collect(Collectors.toSet());
         assertThat(coveredCodes).containsExactlyInAnyOrder("R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08",
-                "R09", "R10", "R11");
+                "R09", "R10", "R11", "R12");
     }
 
     /**
@@ -159,11 +159,11 @@ class GoldenSetEvaluationTest {
                 lines.add(new LineData(i + 1, line.accountCode(), line.side(), line.amount(), line.memo()));
             }
             VoucherData data = new VoucherData(v.voucherDate(), v.description(), v.counterpartyName(),
-                    v.counterpartyBizNo(), v.evidenceType(), v.vatType(), v.supplyAmount(), lines);
+                    v.counterpartyBizNo(), v.evidenceType(), v.vatType(), v.supplyAmount(), lines, v.preparer(), null);
             Stage stage = goldenCase.stage() == null ? Stage.SAVE : Stage.valueOf(goldenCase.stage());
             ValidationContext context = new ValidationContext(data,
                     code -> Optional.ofNullable(accounts.get(code)), closed::contains, duplicates, setup.today(),
-                    stage, goldenCase.draftProblems());
+                    stage, goldenCase.draftProblems(), goldenCase.approver());
             evaluated.add(new Evaluated(goldenCase, engine.evaluate(context)));
         }
         return evaluated;

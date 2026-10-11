@@ -25,6 +25,7 @@ record GoldenFile(Setup setup, List<GoldenCase> cases) {
             String wrongAccountCode,
             String correctAccountCode,
             String why,
+            String approver,
             GoldenVoucher voucher) {
     }
 
@@ -36,6 +37,7 @@ record GoldenFile(Setup setup, List<GoldenCase> cases) {
             EvidenceType evidenceType,
             VatType vatType,
             Long supplyAmount,
+            String preparer,
             List<GoldenLine> lines) {
     }
 

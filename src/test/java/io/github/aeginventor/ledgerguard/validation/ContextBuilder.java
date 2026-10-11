@@ -29,6 +29,8 @@ public final class ContextBuilder {
     private LocalDate today = TODAY;
     private Stage stage = Stage.SAVE;
     private final List<String> draftProblems = new ArrayList<>();
+    private String preparer;
+    private String approver;
 
     public static ContextBuilder voucher() {
         return new ContextBuilder();
@@ -107,10 +109,20 @@ public final class ContextBuilder {
         return this;
     }
 
+    public ContextBuilder preparer(String preparer) {
+        this.preparer = preparer;
+        return this;
+    }
+
+    public ContextBuilder approver(String approver) {
+        this.approver = approver;
+        return this;
+    }
+
     public ValidationContext build() {
         VoucherData data = new VoucherData(voucherDate, description, counterpartyName, counterpartyBizNo,
-                evidenceType, vatType, supplyAmount, lines);
+                evidenceType, vatType, supplyAmount, lines, preparer, null);
         return new ValidationContext(data, TestAccounts.LOOKUP, closed::contains, duplicateChecker, today, stage,
-                draftProblems);
+                draftProblems, approver);
     }
 }

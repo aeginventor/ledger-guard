@@ -61,7 +61,7 @@ public class VoucherService {
 
         Voucher voucher = new Voucher(request.voucherDate(), request.description(), request.counterpartyName(),
                 request.counterpartyBizNo(), request.evidenceType(), request.vatType(), request.supplyAmount(),
-                request.drafterOrManual(), now());
+                request.drafterOrManual(), request.preparer(), now());
         int lineNo = 1;
         for (VoucherLineRequest line : request.lines()) {
             voucher.addLine(new VoucherLine(lineNo++, line.accountCode(), line.side(), toStoredAmount(line.amount()),
@@ -93,7 +93,7 @@ public class VoucherService {
     }
 
     /**
-     * 승인 시점에 규칙을 다시 돌린다. 저장 뒤 기간이 마감됐을 수 있기 때문이다.
+     * 승인 시점에 규칙을 다시 돌린다. 저장 뒤 기간이 마감됐을 수 있기 때문이다. 승인 단계에서는 R12(작성자와 승인자 분리)가 더해진다.
      * FAIL이면 409, REVIEW인데 사유가 없으면 409, 이미 전기된 전표도 409.
      * 409로 끝난 승인은 전표를 바꾸지 않는다. 재검증 결과는 응답 본문에만 담긴다.
      */
@@ -103,7 +103,8 @@ public class VoucherService {
         if (voucher.getStatus() == VoucherStatus.POSTED) {
             throw new ConflictException("전표 " + id + "은 이미 전기되었다");
         }
-        ValidationResult result = engine.evaluate(contextFactory.forApproval(toVoucherData(voucher), voucher));
+        ValidationResult result = engine.evaluate(
+                contextFactory.forApproval(toVoucherData(voucher), voucher, request.approver()));
         if (result.overall() == Overall.FAIL) {
             throw new ConflictException("FAIL 판정 전표는 승인할 수 없다", result);
         }
@@ -144,7 +145,7 @@ public class VoucherService {
                 .toList();
         return new VoucherData(voucher.getVoucherDate(), voucher.getDescription(), voucher.getCounterpartyName(),
                 voucher.getCounterpartyBizNo(), voucher.getEvidenceType(), voucher.getVatType(),
-                voucher.getSupplyAmount(), lines);
+                voucher.getSupplyAmount(), lines, voucher.getPreparer(), null);
     }
 
     private static List<ValidationFinding> toEntities(ValidationResult result) {

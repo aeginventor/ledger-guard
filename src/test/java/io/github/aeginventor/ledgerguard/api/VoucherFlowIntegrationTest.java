@@ -40,6 +40,7 @@ class VoucherFlowIntegrationTest extends ApiTestSupport {
         }
         Map<String, Object> voucherRequest = new LinkedHashMap<>(draftRequest);
         voucherRequest.put("drafter", "fixture");
+        voucherRequest.put("preparer", "김작성");
         voucherRequest.put("lines", lines);
 
         JsonNode saved = postJson("/api/vouchers", voucherRequest, 201);

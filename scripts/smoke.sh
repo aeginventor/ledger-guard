@@ -24,7 +24,7 @@ LINES=$(echo "$DRAFT" | python3 -c 'import json,sys; d=json.load(sys.stdin); pri
 SAVED=$(curl -sS -X POST "$BASE/api/vouchers" -H 'Content-Type: application/json' -d "{
   \"description\": \"사무용품 카드 구입\", \"voucherDate\": \"$DATE\", \"counterpartyName\": \"가상문구\",
   \"evidenceType\": \"CARD\", \"vatType\": \"TAXABLE\", \"supplyAmount\": 100000, \"drafter\": \"fixture\",
-  \"lines\": $LINES }")
+  \"preparer\": \"김작성\", \"lines\": $LINES }")
 echo "$SAVED"; echo
 ID=$(echo "$SAVED" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
 
@@ -34,7 +34,7 @@ curl -sS -X POST "$BASE/api/vouchers/$ID/approve" -H 'Content-Type: application/
 echo "## 5. FAIL 전표 저장 후 승인 시도 (409 기대)"
 FAILED=$(curl -sS -X POST "$BASE/api/vouchers" -H 'Content-Type: application/json' -d "{
   \"description\": \"차대 불일치\", \"voucherDate\": \"$DATE\", \"counterpartyName\": \"가상문구2\",
-  \"evidenceType\": \"CARD\", \"vatType\": \"TAXABLE\", \"supplyAmount\": 100000,
+  \"evidenceType\": \"CARD\", \"vatType\": \"TAXABLE\", \"supplyAmount\": 100000, \"preparer\": \"김작성\",
   \"lines\": [{\"accountCode\":\"830\",\"side\":\"DEBIT\",\"amount\":100000},{\"accountCode\":\"135\",\"side\":\"DEBIT\",\"amount\":10000},{\"accountCode\":\"101\",\"side\":\"CREDIT\",\"amount\":100000}] }")
 echo "$FAILED"; echo
 FID=$(echo "$FAILED" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')

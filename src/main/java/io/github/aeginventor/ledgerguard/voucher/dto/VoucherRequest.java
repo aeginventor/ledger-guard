@@ -24,6 +24,7 @@ public record VoucherRequest(
         @NotNull VatType vatType,
         @PositiveOrZero Long supplyAmount,
         DrafterType drafter,
+        @NotBlank @Size(max = 100) String preparer,
         @NotEmpty @Valid List<VoucherLineRequest> lines) {
 
     public DrafterType drafterOrManual() {
@@ -35,6 +36,6 @@ public record VoucherRequest(
                 .mapToObj(i -> lines.get(i).toLineData(i + 1))
                 .toList();
         return new VoucherData(voucherDate, description, counterpartyName, counterpartyBizNo, evidenceType, vatType,
-                supplyAmount, lineData);
+                supplyAmount, lineData, preparer, null);
     }
 }
