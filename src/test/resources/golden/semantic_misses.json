@@ -1,0 +1,24 @@
+{
+  "setup": {
+    "today": "2026-10-11",
+    "closedPeriods": ["2026-08"],
+    "existingVouchers": []
+  },
+  "cases": [
+    {"id": "S01", "title": "비품(노트북) 구입을 소모품비로 처리", "wrongAccountCode": "830", "correctAccountCode": "212", "why": "1,800,000원 노트북은 비품 자산이다. 금액 기준은 회사 정책이라 규칙으로 두지 않았다.",
+      "voucher": {"voucherDate": "2026-10-09", "description": "업무용 노트북 구입", "counterpartyName": "가상전자", "counterpartyBizNo": "777-88-89990", "evidenceType": "TAX_INVOICE", "vatType": "TAXABLE", "supplyAmount": 1800000,
+      "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 1800000}, {"accountCode": "135", "side": "DEBIT", "amount": 180000}, {"accountCode": "253", "side": "CREDIT", "amount": 1980000}]}},
+    {"id": "S02", "title": "상품 매출을 잡이익으로 처리", "wrongAccountCode": "930", "correctAccountCode": "401", "why": "잡이익도 수익 계정이라 R05는 부가세예수금 대변을 정상으로 본다.",
+      "voucher": {"voucherDate": "2026-10-06", "description": "상품 매출 입금", "counterpartyName": "가상유통", "evidenceType": "CASH_RECEIPT", "vatType": "TAXABLE", "supplyAmount": 1000000,
+      "lines": [{"accountCode": "103", "side": "DEBIT", "amount": 1100000}, {"accountCode": "930", "side": "CREDIT", "amount": 1000000}, {"accountCode": "255", "side": "CREDIT", "amount": 100000}]}},
+    {"id": "S03", "title": "직원 급여를 지급수수료로 처리", "wrongAccountCode": "831", "correctAccountCode": "801", "why": "근로자 급여와 외부 용역 수수료의 구분은 계약 관계를 알아야 한다.",
+      "voucher": {"voucherDate": "2026-09-25", "description": "9월 급여 지급", "counterpartyName": "직원 C", "evidenceType": "NONE", "vatType": "NA",
+      "lines": [{"accountCode": "831", "side": "DEBIT", "amount": 3000000}, {"accountCode": "103", "side": "CREDIT", "amount": 3000000}]}},
+    {"id": "S04", "title": "거래처 접대 식사를 복리후생비로 처리", "wrongAccountCode": "811", "correctAccountCode": "813", "why": "참석자가 직원인지 거래처인지는 전표 데이터에 없다. 기업업무추진비는 매입세액 불공제라 부가세 라인도 달라진다.",
+      "voucher": {"voucherDate": "2026-10-03", "description": "거래처 식사", "counterpartyName": "가상식당", "evidenceType": "CARD", "vatType": "TAXABLE", "supplyAmount": 150000,
+      "lines": [{"accountCode": "811", "side": "DEBIT", "amount": 150000}, {"accountCode": "135", "side": "DEBIT", "amount": 15000}, {"accountCode": "253", "side": "CREDIT", "amount": 165000}]}},
+    {"id": "S05", "title": "외상매입금 상환을 미지급금 감소로 처리", "wrongAccountCode": "253", "correctAccountCode": "251", "why": "상품 매입 채무와 일반 미지급 채무의 구분은 원거래를 추적해야 한다.",
+      "voucher": {"voucherDate": "2026-10-10", "description": "외상매입금 이체", "counterpartyName": "가상도매", "evidenceType": "NONE", "vatType": "NA",
+      "lines": [{"accountCode": "253", "side": "DEBIT", "amount": 2200000}, {"accountCode": "103", "side": "CREDIT", "amount": 2200000}]}}
+  ]
+}
