@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -75,6 +76,19 @@ public class Voucher {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
+    /** 이 전표가 역분개 전표이면 원전표 id. */
+    @Column(name = "reversal_of_id")
+    private Long reversalOfId;
+
+    /** 이 전표가 역분개로 상쇄되었으면 역분개 전표 id. */
+    @Column(name = "reversed_by_id")
+    private Long reversedById;
+
+    /** 낙관적 락. 같은 전표를 동시에 승인하거나 역분개하면 한쪽만 성공한다. */
+    @Version
+    @Column(name = "version", nullable = false)
+    private long version;
+
     @OneToMany(mappedBy = "voucher", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("lineNo ASC")
     private List<VoucherLine> lines = new ArrayList<>();
@@ -126,6 +140,19 @@ public class Voucher {
         this.approver = approver;
         this.approvalReason = reason;
         this.approvedAt = approvedAt;
+    }
+
+    public void markAsReversalOf(Long originalId) {
+        this.reversalOfId = originalId;
+    }
+
+    public void markReversed(Long reversalId) {
+        this.status = VoucherStatus.REVERSED;
+        this.reversedById = reversalId;
+    }
+
+    public boolean isPostedToLedger() {
+        return status == VoucherStatus.POSTED || status == VoucherStatus.REVERSED;
     }
 
     public long totalDebit() {
@@ -197,6 +224,18 @@ public class Voucher {
 
     public LocalDateTime getApprovedAt() {
         return approvedAt;
+    }
+
+    public Long getReversalOfId() {
+        return reversalOfId;
+    }
+
+    public Long getReversedById() {
+        return reversedById;
+    }
+
+    public long getVersion() {
+        return version;
     }
 
     public List<VoucherLine> getLines() {

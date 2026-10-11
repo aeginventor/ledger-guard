@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 /**
  * R05 매입 거래의 부가세는 부가세대급금 차변, 매출 거래의 부가세는 부가세예수금 대변이어야 한다.
  * 수익 계정 라인이 하나라도 있으면 매출 거래, 아니면 매입 거래로 본다.
+ * 역분개 전표는 원전표의 차대를 그대로 뒤집은 것이므로 이 규칙을 적용하지 않는다.
  */
 @Component
 public class R05VatAccountSideRule implements ValidationRule {
@@ -38,6 +39,9 @@ public class R05VatAccountSideRule implements ValidationRule {
 
     @Override
     public List<Finding> check(ValidationContext context) {
+        if (context.voucher().isReversal()) {
+            return List.of();
+        }
         List<LineData> vatLines = RuleSupport.vatLines(context);
         if (vatLines.isEmpty()) {
             return List.of();

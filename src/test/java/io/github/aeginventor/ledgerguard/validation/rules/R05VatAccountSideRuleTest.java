@@ -24,6 +24,12 @@ class R05VatAccountSideRuleTest {
     }
 
     @Test
+    void skipsReversalVoucherWhoseSidesAreFlipped() {
+        assertThat(rule.check(ContextBuilder.voucher().supply(100_000L).reversalOf(7L)
+                .credit("830", 100_000).credit("135", 10_000).debit("101", 110_000).build())).isEmpty();
+    }
+
+    @Test
     void failsWhenPurchaseUsesOutputVatAccount() {
         List<Finding> findings = rule.check(ContextBuilder.voucher().supply(100_000L)
                 .debit("830", 100_000).debit("255", 10_000).credit("101", 110_000).build());

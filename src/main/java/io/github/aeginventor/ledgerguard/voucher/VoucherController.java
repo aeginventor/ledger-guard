@@ -4,6 +4,7 @@ import io.github.aeginventor.ledgerguard.draft.DraftService;
 import io.github.aeginventor.ledgerguard.voucher.dto.ApproveRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.DraftRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.DraftResponse;
+import io.github.aeginventor.ledgerguard.voucher.dto.ReverseRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherRequest;
 import io.github.aeginventor.ledgerguard.voucher.dto.VoucherResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,6 +58,14 @@ public class VoucherController {
     public List<VoucherResponse> list(@RequestParam(required = false) VoucherStatus status,
             @RequestParam(required = false) String month) {
         return voucherService.search(status, month);
+    }
+
+    @PostMapping("/{id}/reverse")
+    @ResponseStatus(HttpStatus.CREATED)
+    @Operation(summary = "전표 역분개", description = "전기된 전표의 차대를 뒤집은 전표를 만들어 바로 전기하고 원전표를 REVERSED로 바꾼다. "
+            + "원전표는 지우지 않는다. 역분개 전표도 규칙을 전부 거치며 FAIL이면 409.")
+    public VoucherResponse reverse(@PathVariable Long id, @Valid @RequestBody ReverseRequest request) {
+        return voucherService.reverse(id, request);
     }
 
     @PostMapping("/{id}/approve")

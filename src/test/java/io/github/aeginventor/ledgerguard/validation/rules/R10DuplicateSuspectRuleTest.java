@@ -27,6 +27,13 @@ class R10DuplicateSuspectRuleTest {
     }
 
     @Test
+    void skipsReversalVoucher() {
+        assertThat(rule.check(ContextBuilder.voucher().reversalOf(7L)
+                .debit("830", 100_000).credit("101", 100_000)
+                .duplicate((date, name, total) -> true).build())).isEmpty();
+    }
+
+    @Test
     void passesWhenNoMatchingVoucherExists() {
         assertThat(rule.check(ContextBuilder.voucher()
                 .debit("830", 100_000).credit("101", 100_000)

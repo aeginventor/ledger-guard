@@ -31,6 +31,7 @@ public final class ContextBuilder {
     private final List<String> draftProblems = new ArrayList<>();
     private String preparer;
     private String approver;
+    private Long reversalOfId;
 
     public static ContextBuilder voucher() {
         return new ContextBuilder();
@@ -119,9 +120,14 @@ public final class ContextBuilder {
         return this;
     }
 
+    public ContextBuilder reversalOf(Long originalId) {
+        this.reversalOfId = originalId;
+        return this;
+    }
+
     public ValidationContext build() {
         VoucherData data = new VoucherData(voucherDate, description, counterpartyName, counterpartyBizNo,
-                evidenceType, vatType, supplyAmount, lines, preparer, null);
+                evidenceType, vatType, supplyAmount, lines, preparer, reversalOfId);
         return new ValidationContext(data, TestAccounts.LOOKUP, closed::contains, duplicateChecker, today, stage,
                 draftProblems, approver);
     }

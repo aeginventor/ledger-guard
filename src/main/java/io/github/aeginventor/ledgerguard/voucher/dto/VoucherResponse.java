@@ -27,7 +27,9 @@ public record VoucherResponse(
         String approver,
         String approvalReason,
         LocalDateTime createdAt,
-        LocalDateTime approvedAt) {
+        LocalDateTime approvedAt,
+        Long reversalOfId,
+        Long reversedById) {
 
     public static VoucherResponse from(Voucher voucher, Function<String, String> accountName) {
         return new VoucherResponse(
@@ -49,6 +51,8 @@ public record VoucherResponse(
                 voucher.getApprover(),
                 voucher.getApprovalReason(),
                 voucher.getCreatedAt(),
-                voucher.getApprovedAt());
+                voucher.getApprovedAt(),
+                voucher.getReversalOfId(),
+                voucher.getReversedById());
     }
 }

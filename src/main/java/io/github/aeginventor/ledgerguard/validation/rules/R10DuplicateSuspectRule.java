@@ -10,7 +10,10 @@ import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
-/** R10 같은 일자, 같은 거래처, 같은 총액(차변 합계)의 전표가 이미 있으면 중복 의심으로 검토를 요청한다. */
+/**
+ * R10 같은 일자, 같은 거래처, 같은 총액(차변 합계)의 전표가 이미 있으면 중복 의심으로 검토를 요청한다.
+ * 역분개 전표는 원전표와 같은 거래처와 총액을 갖는 것이 정상이므로 검사하지 않는다.
+ */
 @Component
 public class R10DuplicateSuspectRule implements ValidationRule {
 
@@ -34,6 +37,9 @@ public class R10DuplicateSuspectRule implements ValidationRule {
     @Override
     public List<Finding> check(ValidationContext context) {
         VoucherData voucher = context.voucher();
+        if (voucher.isReversal()) {
+            return List.of();
+        }
         if (voucher.voucherDate() == null || voucher.counterpartyName() == null || voucher.counterpartyName().isBlank()) {
             return List.of();
         }
