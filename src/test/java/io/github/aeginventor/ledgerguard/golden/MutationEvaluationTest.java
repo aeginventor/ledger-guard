@@ -307,6 +307,16 @@ class MutationEvaluationTest {
                     }
                     return Optional.of(Mutated.fail(withEvidence(v, EvidenceType.NONE), "R09"));
                 }),
+                new Operator("EVIDENCE_MISMATCH", "면세 거래의 증빙을 세금계산서로, 과세 거래의 증빙을 계산서로 바꾼다", false, seed -> {
+                    VoucherData v = seed.voucher();
+                    if (v.vatType() == VatType.EXEMPT) {
+                        return Optional.of(Mutated.fail(withEvidence(withBizNo(v, "123-45-67891"), EvidenceType.TAX_INVOICE), "R13"));
+                    }
+                    if (v.vatType() == VatType.TAXABLE) {
+                        return Optional.of(Mutated.fail(withEvidence(v, EvidenceType.INVOICE), "R13"));
+                    }
+                    return Optional.empty();
+                }),
                 new Operator("SELF_APPROVAL", "작성자가 자기 전표를 승인한다(승인 단계)", false, seed ->
                         Optional.of(Mutated.fail(withPreparer(seed.voucher(), "김작성"), "R12").stage(Stage.APPROVE).approver("김작성"))),
                 new Operator("SAME_TYPE_ACCOUNT_SWAP", "부가세가 아닌 첫 라인의 계정을 같은 유형의 다른 활성 계정으로 바꾼다(의미 변이, 형식 규칙은 못 잡음)", true, seed -> {
@@ -412,6 +422,11 @@ class MutationEvaluationTest {
     private static VoucherData withEvidence(VoucherData v, EvidenceType evidence) {
         return new VoucherData(v.voucherDate(), v.description(), v.counterpartyName(), v.counterpartyBizNo(),
                 evidence, v.vatType(), v.supplyAmount(), v.lines(), v.preparer(), v.reversalOfId());
+    }
+
+    private static VoucherData withBizNo(VoucherData v, String bizNo) {
+        return new VoucherData(v.voucherDate(), v.description(), v.counterpartyName(), bizNo,
+                v.evidenceType(), v.vatType(), v.supplyAmount(), v.lines(), v.preparer(), v.reversalOfId());
     }
 
     private static VoucherData withPreparer(VoucherData v, String preparer) {

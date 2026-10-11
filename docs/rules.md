@@ -1,6 +1,6 @@
 # 규칙 상세
 
-규칙은 `io.github.aeginventor.ledgerguard.validation.rules` 패키지의 독립 클래스 12개입니다. 모두 `ValidationRule`을 구현하고 `ValidationEngine`이 코드 순으로 끝까지 실행합니다. 어느 규칙도 다른 규칙의 결과를 보지 않습니다. 판정은 FAIL이 하나라도 있으면 FAIL, 없고 REVIEW가 있으면 REVIEW, 둘 다 없으면 PASS입니다.
+규칙은 `io.github.aeginventor.ledgerguard.validation.rules` 패키지의 독립 클래스 13개입니다. 모두 `ValidationRule`을 구현하고 `ValidationEngine`이 코드 순으로 끝까지 실행합니다. 어느 규칙도 다른 규칙의 결과를 보지 않습니다. 판정은 FAIL이 하나라도 있으면 FAIL, 없고 REVIEW가 있으면 REVIEW, 둘 다 없으면 PASS입니다.
 
 규칙이 보는 입력은 `VoucherData`(전표 일자, 설명, 거래처, 사업자등록번호, 증빙 종류, 부가세 종류, 공급가액, 라인 목록)와 `ValidationContext`(계정과목 조회, 기간 마감 여부, 중복 조회, 오늘 날짜, 단계, 초안 생성 문제 목록)입니다. 라인 금액은 `BigDecimal`로 받아 소수와 음수도 규칙이 사유와 함께 거부합니다.
 
@@ -100,6 +100,14 @@
 - 근거: 내부통제의 직무 분리(전표 작성과 승인을 다른 사람이 한다)
 - 한계: 인증이 없어 두 이름은 요청 본문의 문자열이다. 이름만 바꿔 적으면 우회된다. 인증과 역할을 붙이는 것이 다음 단계다
 
+## R13 EVIDENCE_MATCHES_VAT_TYPE (REVIEW)
+
+- 입력: `evidenceType`, `vatType`
+- 판정: `EXEMPT`인데 증빙이 `TAX_INVOICE`이면 REVIEW. `TAXABLE`이나 `ZERO_RATED`인데 증빙이 `INVOICE`(계산서)이면 REVIEW. 카드, 현금영수증, 증빙 없음, `NA`는 검사하지 않는다
+- 예시: 면세 도서 구입에 세금계산서 → REVIEW "면세 거래의 증빙이 세금계산서다". 과세 사무용품 구입에 계산서 → REVIEW
+- 근거: 부가가치세법 제32조 제1항 본문이 면세 재화 또는 용역의 공급을 세금계산서 발급 대상에서 뺀다([legal-basis.md](legal-basis.md)). 계산서는 법인세법 제121조와 소득세법 제163조(확인 필요)
+- 유래: 조문 원문을 읽고 R06의 빈칸으로 찾아 더한 규칙이다. 증빙 종류에 `INVOICE`(계산서)를 함께 추가했고, R09는 계산서를 적격증빙으로 본다(법인세법 제25조 제2항 제2호)
+
 ## 규칙이 보지 않는 것
 
 - 계정 선택이 거래의 실질과 맞는지. `semantic_misses.json`의 5건이 모두 PASS로 나온다. 상세는 [evaluation.md](evaluation.md)
@@ -108,5 +116,4 @@
 - 원천징수세액, 4대보험 같은 급여 관련 계산
 - 기업업무추진비 가운데 경조금은 기준이 3만원이 아니라 20만원(법인세법 시행령 제41조 제1항 제1호)인데, 전표에 경조금 여부가 없어 R09는 3만원만 적용한다
 - 신용카드가 법인 명의인지(같은 시행령 제41조 제6항). `evidenceType=CARD`는 법인카드와 개인카드를 구분하지 않는다
-- 면세 거래에 세금계산서 증빙이 붙은 조합. 부가가치세법 제32조 제1항은 면세 공급을 세금계산서 대상에서 빼므로 증빙은 계산서여야 하지만, R06은 이 조합을 통과시킨다
 - 계정 선택을 같은 유형 안에서 바꾼 전표. 변이 평가의 SAME_TYPE_ACCOUNT_SWAP 27건이 전부 PASS로 나온다. 상세는 [evaluation.md](evaluation.md)

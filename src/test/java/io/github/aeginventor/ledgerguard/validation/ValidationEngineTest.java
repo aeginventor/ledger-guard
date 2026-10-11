@@ -14,6 +14,7 @@ import io.github.aeginventor.ledgerguard.validation.rules.R09EntertainmentEviden
 import io.github.aeginventor.ledgerguard.validation.rules.R10DuplicateSuspectRule;
 import io.github.aeginventor.ledgerguard.validation.rules.R11DraftSchemaRule;
 import io.github.aeginventor.ledgerguard.validation.rules.R12PreparerNotApproverRule;
+import io.github.aeginventor.ledgerguard.validation.rules.R13EvidenceMatchesVatTypeRule;
 import io.github.aeginventor.ledgerguard.voucher.EvidenceType;
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -27,13 +28,14 @@ class ValidationEngineTest {
                 new R11DraftSchemaRule(), new R05VatAccountSideRule(), new R01BalancedRule(),
                 new R02AccountValidRule(), new R03AmountPositiveIntRule(), new R04VatAmountRule(),
                 new R06TaxInvoiceRequisitesRule(), new R07PeriodOpenRule(), new R08DateNotFutureRule(),
-                new R09EntertainmentEvidenceRule(), new R10DuplicateSuspectRule(), new R12PreparerNotApproverRule()));
+                new R09EntertainmentEvidenceRule(), new R10DuplicateSuspectRule(), new R12PreparerNotApproverRule(),
+                new R13EvidenceMatchesVatTypeRule()));
     }
 
     @Test
     void sortsRulesByCodeRegardlessOfRegistrationOrder() {
         assertThat(engine().rules().stream().map(ValidationRule::code))
-                .containsExactly("R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12");
+                .containsExactly("R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08", "R09", "R10", "R11", "R12", "R13");
     }
 
     @Test

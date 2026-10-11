@@ -42,6 +42,12 @@ class R09EntertainmentEvidenceRuleTest {
     }
 
     @Test
+    void passesWhenPlainInvoiceExists() {
+        assertThat(rule.check(ContextBuilder.voucher().vat(VatType.NA).evidence(EvidenceType.INVOICE)
+                .debit("813", 50_000).credit("101", 50_000).build())).isEmpty();
+    }
+
+    @Test
     void sumsMultipleEntertainmentLines() {
         assertThat(rule.check(ContextBuilder.voucher().vat(VatType.NA).evidence(EvidenceType.NONE)
                 .debit("813", 20_000).debit("813", 15_000).credit("101", 35_000).build())).hasSize(1);

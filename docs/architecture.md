@@ -7,7 +7,7 @@ io.github.aeginventor.ledgerguard
 ├── account      계정과목 엔티티, 리포지토리, 조회 API
 ├── voucher      전표, 라인, 검증 사유 엔티티와 저장, 승인 서비스와 API
 ├── validation   VoucherData, ValidationContext, ValidationRule, ValidationEngine, ValidationMetrics, 사업자등록번호 체크섬
-│   └── rules    R01 ~ R12 독립 규칙 클래스
+│   └── rules    R01 ~ R13 독립 규칙 클래스
 ├── draft        JournalDrafter 인터페이스, FixtureJournalDrafter, OpenAiJournalDrafter, DraftService
 ├── period       회계기간 마감
 ├── ledger       원장 엔티티와 집계 쿼리
@@ -93,7 +93,7 @@ erDiagram
         varchar description
         varchar counterparty_name
         varchar counterparty_biz_no
-        varchar evidence_type "TAX_INVOICE CARD CASH_RECEIPT NONE"
+        varchar evidence_type "TAX_INVOICE INVOICE CARD CASH_RECEIPT NONE"
         varchar vat_type "TAXABLE EXEMPT ZERO_RATED NA"
         bigint supply_amount
         varchar status "DRAFT REVIEW REJECTED APPROVED POSTED REVERSED"

@@ -60,6 +60,10 @@
     {"id": "F26", "title": "면세 매입에 부가세예수금 차변", "expectedCodes": ["R04", "R05"], "voucher": {"voucherDate": "2026-10-07", "description": "직원 교육용 도서 구입", "counterpartyName": "가상서점", "evidenceType": "CASH_RECEIPT", "vatType": "EXEMPT", "supplyAmount": 45000,
       "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 45000}, {"accountCode": "255", "side": "DEBIT", "amount": 4500}, {"accountCode": "101", "side": "CREDIT", "amount": 49500}]}},
     {"id": "F27", "title": "작성자가 자기 전표를 승인", "stage": "APPROVE", "expectedCodes": ["R12"], "approver": "김작성", "voucher": {"voucherDate": "2026-10-02", "description": "사무용품 구입", "counterpartyName": "가상문구셋", "evidenceType": "CARD", "vatType": "TAXABLE", "supplyAmount": 100000, "preparer": "김작성",
+      "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 100000}, {"accountCode": "135", "side": "DEBIT", "amount": 10000}, {"accountCode": "101", "side": "CREDIT", "amount": 110000}]}},
+    {"id": "F28", "title": "면세 매입에 세금계산서 증빙", "expectedCodes": ["R13"], "voucher": {"voucherDate": "2026-10-07", "description": "직원 교육용 도서 구입", "counterpartyName": "가상서점둘", "counterpartyBizNo": "123-45-67891", "evidenceType": "TAX_INVOICE", "vatType": "EXEMPT", "supplyAmount": 45000, "preparer": "김작성",
+      "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 45000}, {"accountCode": "101", "side": "CREDIT", "amount": 45000}]}},
+    {"id": "F29", "title": "과세 매입에 계산서 증빙", "expectedCodes": ["R13"], "voucher": {"voucherDate": "2026-10-02", "description": "사무용품 구입", "counterpartyName": "가상문구넷", "evidenceType": "INVOICE", "vatType": "TAXABLE", "supplyAmount": 100000, "preparer": "김작성",
       "lines": [{"accountCode": "830", "side": "DEBIT", "amount": 100000}, {"accountCode": "135", "side": "DEBIT", "amount": 10000}, {"accountCode": "101", "side": "CREDIT", "amount": 110000}]}}
 ]
 }

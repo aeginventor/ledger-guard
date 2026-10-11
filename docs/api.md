@@ -44,7 +44,7 @@ curl -s -X POST http://localhost:8080/api/vouchers \
                 {"accountCode":"253","side":"CREDIT","amount":110000}]}'
 ```
 
-HTTP 201. `status`는 판정에 따라 `DRAFT`, `REVIEW`, `REJECTED`입니다. `preparer`(작성자)는 필수이며 없으면 400입니다.
+HTTP 201. `status`는 판정에 따라 `DRAFT`, `REVIEW`, `REJECTED`입니다. `preparer`(작성자)는 필수이며 없으면 400입니다. `evidenceType`은 `TAX_INVOICE`(세금계산서), `INVOICE`(계산서), `CARD`, `CASH_RECEIPT`, `NONE`이고, `vatType`은 `TAXABLE`, `EXEMPT`, `ZERO_RATED`, `NA`입니다.
 
 ```json
 {"id":1,"voucherDate":"2026-10-11","description":"사무용품 카드 구입","counterpartyName":"가상문구",
@@ -171,7 +171,7 @@ ledger_guard_verdicts_total{overall="fail",stage="save"} 1.0
 ledger_guard_findings_total{rule="R01",severity="fail",stage="save"} 1.0
 ```
 
-`stage`는 draft, save, approve이고 `rule`은 R01부터 R12까지입니다.
+`stage`는 draft, save, approve이고 `rule`은 R01부터 R13까지입니다.
 
 ## 오류 형식
 

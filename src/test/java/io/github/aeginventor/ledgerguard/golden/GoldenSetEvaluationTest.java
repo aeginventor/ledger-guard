@@ -114,7 +114,7 @@ class GoldenSetEvaluationTest {
         Set<String> coveredCodes = faulty.stream().flatMap(e -> e.goldenCase().expectedCodes().stream())
                 .collect(Collectors.toSet());
         assertThat(coveredCodes).containsExactlyInAnyOrder("R01", "R02", "R03", "R04", "R05", "R06", "R07", "R08",
-                "R09", "R10", "R11", "R12");
+                "R09", "R10", "R11", "R12", "R13");
     }
 
     /**
