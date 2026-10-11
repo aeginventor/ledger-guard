@@ -1,0 +1,10 @@
+{
+  "id": "salary",
+  "priority": 30,
+  "keywords": ["급여", "월급", "인건비", "봉급"],
+  "settlement": {"defaultAccount": "103", "keywords": {"현금": "101"}},
+  "lines": [
+    {"accountCode": "801", "side": "DEBIT", "amount": "TOTAL", "memo": "급여"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "지급"}
+  ]
+}

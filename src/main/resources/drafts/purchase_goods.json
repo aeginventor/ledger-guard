@@ -1,0 +1,11 @@
+{
+  "id": "purchase_goods",
+  "priority": 10,
+  "keywords": ["상품 매입", "상품매입", "상품 구입", "물품 매입", "재고 매입"],
+  "settlement": {"defaultAccount": "251", "keywords": {"현금": "101", "이체": "103", "계좌": "103", "통장": "103", "카드": "253"}},
+  "lines": [
+    {"accountCode": "146", "side": "DEBIT", "amount": "SUPPLY", "memo": "상품 매입"},
+    {"accountCode": "135", "side": "DEBIT", "amount": "VAT", "memo": "매입세액"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "결제"}
+  ]
+}

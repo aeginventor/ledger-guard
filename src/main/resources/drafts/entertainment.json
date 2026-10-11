@@ -1,0 +1,10 @@
+{
+  "id": "entertainment",
+  "priority": 60,
+  "keywords": ["접대", "거래처 식사", "거래처 선물", "기업업무추진"],
+  "settlement": {"defaultAccount": "101", "keywords": {"카드": "253", "이체": "103", "계좌": "103"}},
+  "lines": [
+    {"accountCode": "813", "side": "DEBIT", "amount": "TOTAL", "memo": "기업업무추진비(매입세액 불공제, 총액)"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "지급"}
+  ]
+}

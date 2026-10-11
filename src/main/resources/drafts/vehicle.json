@@ -1,0 +1,11 @@
+{
+  "id": "vehicle",
+  "priority": 90,
+  "keywords": ["주유", "유류", "차량 수리", "차량 정비", "차량유지"],
+  "settlement": {"defaultAccount": "253", "keywords": {"현금": "101", "이체": "103"}},
+  "lines": [
+    {"accountCode": "822", "side": "DEBIT", "amount": "SUPPLY", "memo": "차량유지비"},
+    {"accountCode": "135", "side": "DEBIT", "amount": "VAT", "memo": "매입세액"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "결제"}
+  ]
+}

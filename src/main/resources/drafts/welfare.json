@@ -1,0 +1,11 @@
+{
+  "id": "welfare",
+  "priority": 70,
+  "keywords": ["복리후생", "직원 식대", "회식", "직원 간식", "경조사"],
+  "settlement": {"defaultAccount": "101", "keywords": {"카드": "253", "이체": "103", "계좌": "103"}},
+  "lines": [
+    {"accountCode": "811", "side": "DEBIT", "amount": "SUPPLY", "memo": "복리후생비"},
+    {"accountCode": "135", "side": "DEBIT", "amount": "VAT", "memo": "매입세액"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "지급"}
+  ]
+}

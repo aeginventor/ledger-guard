@@ -1,0 +1,11 @@
+{
+  "id": "fee",
+  "priority": 100,
+  "keywords": ["수수료", "세무 대리", "기장료", "자문료", "법무"],
+  "settlement": {"defaultAccount": "103", "keywords": {"현금": "101", "카드": "253", "미지급": "253"}},
+  "lines": [
+    {"accountCode": "831", "side": "DEBIT", "amount": "SUPPLY", "memo": "지급수수료"},
+    {"accountCode": "135", "side": "DEBIT", "amount": "VAT", "memo": "매입세액"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "지급"}
+  ]
+}

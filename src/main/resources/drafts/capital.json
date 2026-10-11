@@ -1,0 +1,10 @@
+{
+  "id": "capital",
+  "priority": 120,
+  "keywords": ["자본금", "출자", "증자"],
+  "settlement": {"defaultAccount": "103", "keywords": {"현금": "101"}},
+  "lines": [
+    {"accountCode": "@settlement", "side": "DEBIT", "amount": "TOTAL", "memo": "납입"},
+    {"accountCode": "331", "side": "CREDIT", "amount": "TOTAL", "memo": "자본금"}
+  ]
+}

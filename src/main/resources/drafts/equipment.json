@@ -1,0 +1,11 @@
+{
+  "id": "equipment",
+  "priority": 50,
+  "keywords": ["비품", "노트북", "컴퓨터", "모니터", "책상", "의자", "프린터"],
+  "settlement": {"defaultAccount": "253", "keywords": {"현금": "101", "이체": "103", "계좌": "103", "통장": "103"}},
+  "lines": [
+    {"accountCode": "212", "side": "DEBIT", "amount": "SUPPLY", "memo": "비품 취득"},
+    {"accountCode": "135", "side": "DEBIT", "amount": "VAT", "memo": "매입세액"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "결제"}
+  ]
+}

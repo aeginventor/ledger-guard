@@ -1,0 +1,11 @@
+{
+  "id": "communication",
+  "priority": 80,
+  "keywords": ["통신비", "전화 요금", "인터넷 요금", "휴대폰 요금"],
+  "settlement": {"defaultAccount": "103", "keywords": {"현금": "101", "카드": "253"}},
+  "lines": [
+    {"accountCode": "814", "side": "DEBIT", "amount": "SUPPLY", "memo": "통신비"},
+    {"accountCode": "135", "side": "DEBIT", "amount": "VAT", "memo": "매입세액"},
+    {"accountCode": "@settlement", "side": "CREDIT", "amount": "TOTAL", "memo": "지급"}
+  ]
+}

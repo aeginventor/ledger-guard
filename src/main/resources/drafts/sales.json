@@ -1,0 +1,11 @@
+{
+  "id": "sales",
+  "priority": 20,
+  "keywords": ["매출", "판매", "납품", "용역 제공"],
+  "settlement": {"defaultAccount": "108", "keywords": {"현금": "101", "입금": "103", "이체": "103", "계좌": "103", "통장": "103"}},
+  "lines": [
+    {"accountCode": "@settlement", "side": "DEBIT", "amount": "TOTAL", "memo": "대금"},
+    {"accountCode": "401", "side": "CREDIT", "amount": "SUPPLY", "memo": "매출"},
+    {"accountCode": "255", "side": "CREDIT", "amount": "VAT", "memo": "매출세액"}
+  ]
+}
