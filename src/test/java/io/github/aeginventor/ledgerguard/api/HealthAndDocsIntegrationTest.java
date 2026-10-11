@@ -28,6 +28,16 @@ class HealthAndDocsIntegrationTest extends ApiTestSupport {
     }
 
     @Test
+    void rulesAreListedInCodeOrder() throws Exception {
+        JsonNode rules = getJson("/api/rules", 200);
+        assertThat(rules).hasSize(13);
+        assertThat(rules.get(0).get("code").asText()).isEqualTo("R01");
+        assertThat(rules.get(12).get("code").asText()).isEqualTo("R13");
+        assertThat(rules.get(8).get("severity").asText()).isEqualTo("REVIEW");
+        assertThat(rules.get(11).get("name").asText()).isEqualTo("PREPARER_NOT_APPROVER");
+    }
+
+    @Test
     void prometheusCountsVerdictsAndFindingsPerRule() throws Exception {
         postJson("/api/vouchers", Map.of(
                 "voucherDate", LocalDate.now().minusDays(1).toString(),

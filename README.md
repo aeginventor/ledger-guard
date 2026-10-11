@@ -62,6 +62,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 | 메서드와 경로 | 설명 |
 |---|---|
 | `GET /api/accounts` | 계정과목표 30개 |
+| `GET /api/rules` | 규칙 13개의 코드, 이름, 판정 수준 |
 | `POST /api/vouchers/draft` | 거래 설명으로 초안 생성과 판정. 저장하지 않음. 응답 `drafter` 필드가 `fixture`이면 실제 LLM 호출이 아님 |
 | `POST /api/vouchers` | 전표 저장. 판정 결과에 따라 DRAFT, REVIEW, REJECTED. FAIL도 기록으로 남김 |
 | `GET /api/vouchers/{id}`, `GET /api/vouchers?status=&month=` | 조회와 목록 |
@@ -70,7 +71,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 | `POST /api/periods/{yyyymm}/close` | 기간 마감 |
 | `GET /api/reports/trial-balance?month=2026-10&scope=month` | 합계잔액시산표. `scope=month`(기본)는 그 달에 전기된 항목만, `scope=ytd`는 그 해 1월부터의 누계이며 행마다 기초 잔액과 당월 발생액을 준다. `balanced` 필드로 총차변과 총대변 일치 여부 표시 |
 | `/actuator/health`, `/actuator/health/readiness`, `/actuator/health/liveness` | 상태 확인 |
-| `/actuator/prometheus` | 규칙별 사유 수와 판정 수 카운터 |
+| `/actuator/prometheus` | 규칙별 사유 수와 판정 수 카운터. 알림 규칙 예시는 `ops/prometheus-rules.yaml` |
 
 요청과 응답 예시는 [docs/api.md](docs/api.md)에 있습니다.
 
@@ -98,7 +99,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 
 ## 검증
 
-2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 128개가 모두 통과했습니다. 규칙 단위 테스트 68개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 20개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표, 증빙 일치 규칙, 시산표 누계를 더하며 28개가 늘었습니다.
+2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 129개가 모두 통과했습니다. 규칙 단위 테스트 68개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 21개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표, 증빙 일치 규칙, 시산표 누계, 규칙 목록을 더하며 29개가 늘었습니다.
 
 골든셋과 변이 평가 결과는 아래와 같습니다. 재현 명령과 상세 표는 [docs/evaluation.md](docs/evaluation.md)에 있습니다.
 
@@ -116,6 +117,10 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 쿠버네티스는 10월 11일에 `kubectl apply --dry-run=client`만 통과시켰고, 10월 12일에 kind 로컬 클러스터에 실제로 배포했습니다. 1차는 `runAsNonRoot`와 이미지의 문자 사용자명이 충돌해 컨테이너가 뜨지 못했고(UID를 10001로 고정), 2차는 앱이 DB보다 먼저 떠서 두 번 재시작했습니다(DB 포트를 기다리는 초기화 컨테이너 추가). 3차는 재시작 0회, DB Ready 뒤 23초에 앱 Ready, smoke 통과, 롤링 업데이트 21초였습니다. 둘 다 dry-run이 잡지 못한 문제입니다. 운영 클러스터에는 배포하지 않았습니다.
 
 GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행하고, main에 push되면 이미지를 GHCR에 올립니다. 첫 실행은 Linux의 시각 정밀도 차이로 실패했고 수정 뒤 [통과했습니다](https://github.com/aeginventor/ledger-guard/actions/runs/38120768628). 전체 목록은 [Actions](https://github.com/aeginventor/ledger-guard/actions)에 있습니다.
+
+## 실제 LLM 호출 (llm-drafter 브랜치)
+
+실제 LLM 호출은 [llm-drafter 브랜치](https://github.com/aeginventor/ledger-guard/tree/llm-drafter)에 있습니다. OpenAI 키가 없어 로컬 sLLM(Ollama의 qwen2.5:3b)을 OpenAI 호환 엔드포인트로 붙여 60건을 실측했고, 키가 있으면 환경변수만 바꾸면 OpenAI로 돌아갑니다. 초안이 FAIL이면 사유를 되먹여 다시 쓰게 하는 수정 루프(상한 2회)도 그 브랜치에 있습니다. 결과는 브랜치의 docs/llm-eval.md에 있습니다.
 
 ## 한계와 다음 작업
 
@@ -135,6 +140,8 @@ GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행�
 - [설계 결정 로그](docs/decisions.md)
 - [골든셋과 변이 평가 결과, compose와 kind 실측, 재현 명령](docs/evaluation.md)
 - [세법 조문 조회 메모](docs/legal-basis.md)
+- [AI 코딩 도구와 사람을 위한 저장소 지도](AGENTS.md)
+- [Prometheus 알림 규칙](ops/prometheus-rules.yaml)
 - [계층 구조와 ERD](docs/architecture.md)
 - [API 예시](docs/api.md)
 

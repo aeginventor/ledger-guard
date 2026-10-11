@@ -198,3 +198,24 @@
 - 이유: 원장이 유일한 진실이어야 하고, 연도를 넘기려면 수익과 비용을 이익잉여금으로 마감하는 결산 분개가 먼저 있어야 한다. 결산이 없는 상태에서 전년도까지 누계하면 손익 계정이 해를 넘어 쌓여 틀린 숫자가 된다
 - 사용자 확인 필요: 예 (연 단위 누계가 의도와 맞는지, 결산 분개를 언제 넣을지)
 
+## 31. 실행계획을 재서 인덱스 둘을 더했다
+
+- 결정: 전표 5만 건과 원장 15만 건을 PostgreSQL에 넣고 `EXPLAIN (ANALYZE, BUFFERS)`로 R10 중복 후보 조회와 시산표 월 집계를 쟀다. `voucher (voucher_date, counterparty_name)`과 `ledger_entry (entry_date, account_code, side, amount)`를 V4로 추가했다. 수치는 evaluation.md 8절
+- 대안: 인덱스 없이 둔다. 시산표용 집계 테이블을 둔다
+- 이유: 중복 조회는 날짜 인덱스로 167건을 읽고 거래처를 걸러 9건을 내던 것이 복합 인덱스로 9건만 읽게 됐다(Buffers 173에서 11). 집계는 amount까지 키에 넣어 index only scan이 되자 Buffers 677에서 89로 줄었다. 다만 적재 직후에는 visibility map이 비어 index only scan이 선택되지 않았고 VACUUM 뒤에야 쓰였다. 수업에서 배운 대로 ms보다 Buffers와 계획 모양으로 판단했다
+- 사용자 확인 필요: 예
+
+## 32. 규칙 판정 분포로 초안 품질 드리프트를 본다
+
+- 결정: `ops/prometheus-rules.yaml`에 초안 FAIL 비율 50% 초과, 한 규칙의 사유 급증, 승인 FAIL 지속 세 가지 알림 규칙을 둔다. 지표는 이미 노출된 두 카운터다
+- 대안: 로그 검색. 모델 출력 자체를 감시
+- 이유: 초안 작성기가 바뀌거나(모델 교체, 프롬프트 수정) 입력이 바뀌면 규칙 판정 분포가 먼저 움직인다. AIOps 수업의 드리프트 감지를 모델 지표가 아니라 규칙 판정에 적용한 것이다. 실제 Prometheus 서버에 붙여 보지는 않았다
+- 사용자 확인 필요: 예
+
+## 33. startupProbe를 두고 readiness와 liveness의 initialDelay를 뺐다
+
+- 결정: `startupProbe`(liveness 경로, 5초 간격, 24회)가 통과한 뒤에 readiness와 liveness가 돈다
+- 대안: initialDelaySeconds로 기동 시간을 어림잡는다(10월 11일 매니페스트)
+- 이유: initialDelay는 노드가 느리면 모자라고 빠르면 낭비다. startupProbe는 기동이 끝난 시점을 직접 본다. kind에서 다시 돌려 확인하지는 않았고 dry-run만 통과했다
+- 사용자 확인 필요: 예
+

@@ -37,18 +37,23 @@ spec:
                 name: ledger-guard-config
             - secretRef:
                 name: ledger-guard-secret
+          # startupProbe가 통과할 때까지 liveness는 돌지 않는다. 느린 기동(큰 마이그레이션, 느린 노드)을 liveness가 죽이지 않게 한다.
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: http
+            periodSeconds: 5
+            failureThreshold: 24
           readinessProbe:
             httpGet:
               path: /actuator/health/readiness
               port: http
-            initialDelaySeconds: 20
             periodSeconds: 10
-            failureThreshold: 6
+            failureThreshold: 3
           livenessProbe:
             httpGet:
               path: /actuator/health/liveness
               port: http
-            initialDelaySeconds: 40
             periodSeconds: 15
             failureThreshold: 3
           resources:

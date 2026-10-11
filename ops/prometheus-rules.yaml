@@ -1,0 +1,35 @@
+# Prometheus 알림 규칙. 규칙 엔진의 판정 분포로 초안 품질의 드리프트를 본다.
+# 적용 예: prometheus.yml의 rule_files에 이 파일을 넣거나, Prometheus Operator의 PrometheusRule로 감싼다.
+# 지표는 /actuator/prometheus의 ledger_guard_verdicts_total{stage, overall}과 ledger_guard_findings_total{stage, rule, severity}다.
+groups:
+  - name: ledger-guard
+    rules:
+      - alert: LedgerGuardDraftFailRateHigh
+        # 초안 단계 FAIL 비율이 10분 동안 50%를 넘으면 초안 작성기(LLM이나 fixture)나 입력 품질이 바뀐 것이다.
+        expr: |
+          sum(rate(ledger_guard_verdicts_total{stage="draft",overall="fail"}[10m]))
+            /
+          sum(rate(ledger_guard_verdicts_total{stage="draft"}[10m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 초안 FAIL 비율이 50%를 넘었다
+          description: 어느 규칙이 늘었는지 ledger_guard_findings_total{stage="draft"}를 rule별로 본다.
+      - alert: LedgerGuardSingleRuleSpike
+        # 한 규칙의 사유가 10분 동안 분당 5건을 넘으면 그 규칙이 보는 입력이 갑자기 바뀐 것이다(예: 마감 뒤 몰리는 R07).
+        expr: sum by (rule) (rate(ledger_guard_findings_total[10m])) * 60 > 5
+        for: 10m
+        labels:
+          severity: info
+        annotations:
+          summary: 규칙 {{ $labels.rule }} 사유가 분당 5건을 넘었다
+      - alert: LedgerGuardApproveFailRateHigh
+        # 승인 단계 FAIL은 저장 뒤 기간이 마감됐거나(R07) 작성자가 자기 전표를 승인하려는 것(R12)이다. 운영 절차 문제다.
+        expr: |
+          sum(rate(ledger_guard_verdicts_total{stage="approve",overall="fail"}[30m])) > 0
+        for: 30m
+        labels:
+          severity: info
+        annotations:
+          summary: 승인 단계 FAIL이 30분 동안 이어진다

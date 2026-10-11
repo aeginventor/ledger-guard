@@ -8,7 +8,7 @@
 ./gradlew test
 ```
 
-결과: 테스트 128개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계를 더하면서 28개가 늘었습니다.
+결과: 테스트 129개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계와 규칙 목록을 더하면서 29개가 늘었습니다.
 
 | 테스트 클래스 | 개수 | 내용 |
 |---|---|---|
@@ -24,7 +24,7 @@
 | api.ReversalIntegrationTest | 5 | 역분개 차대 반전과 즉시 전기와 시산표 상쇄, POSTED만 역분개, 역분개의 R12, 마감 달 역분개 R07, 요청 검증 |
 | api.ConcurrentApprovalIntegrationTest | 3 | 같은 전표 동시 승인 2건 중 200과 409 각 1건, 원장 라인 3개 (3회 반복) |
 | voucher.OptimisticLockTest | 1 | 트랜잭션 A가 version 0을 읽은 사이 B가 커밋하면 A는 OptimisticLockingFailureException |
-| api.HealthAndDocsIntegrationTest | 3 | readiness와 liveness, 계정 30건, OpenAPI, Prometheus 카운터 |
+| api.HealthAndDocsIntegrationTest | 4 | readiness와 liveness, 계정 30건, OpenAPI, Prometheus 카운터, 규칙 목록 13개 |
 | api.TrialBalanceScopeIntegrationTest | 1 | 1월과 2월 전기 뒤 2월의 month 범위와 ytd 범위 비교. 기초 잔액, 당월 발생액, 누계, 잘못된 scope 400 |
 | golden.GoldenSetEvaluationTest | 3 | 아래 골든셋 평가 |
 | golden.MutationEvaluationTest | 3 | 아래 변이 평가 |
@@ -206,3 +206,16 @@ kind delete cluster --name ledger-guard
 - 운영 클러스터 배포. kind는 노드 하나짜리 로컬 클러스터다
 - 부하와 성능 측정. 동시성은 승인 2건 충돌까지만 확인했다
 - 세법 조문의 최종 확인. 조회 메모는 [legal-basis.md](legal-basis.md)에 있고 "확인 필요" 표시는 작성자가 닫는다
+
+## 8. PostgreSQL 실행계획 (2026-10-12, 전표 5만 건)
+
+compose의 PostgreSQL 16.15에 `generate_series`로 전표 50,000건(거래처 2,000종, 300일), 전표 라인과 원장 각 150,000건을 넣고 `EXPLAIN (ANALYZE, BUFFERS)`로 쟀습니다. 수치는 두 번째 실행이 아니라 각 한 번이며, 같은 기계에서 Ollama가 돌고 있어 ms는 흔들릴 수 있습니다. 판단은 Buffers와 계획 모양으로 했습니다.
+
+| 쿼리 | 인덱스 전 | 인덱스 후 |
+|---|---|---|
+| R10 중복 후보(일자, 거래처, REJECTED 제외) | Bitmap Heap Scan on idx_voucher_date, 후보 167건 읽고 9건 반환, Buffers 173, 0.254ms | Index Scan on idx_voucher_date_counterparty, 9건, Buffers 11, 0.060ms |
+| 시산표 월 집계(2026-05, 15,531건) | Bitmap Heap Scan on idx_ledger_entry_date, Buffers 677, 3.04ms | 적재 직후에는 계획이 바뀌지 않았다(Buffers 677). `VACUUM ANALYZE` 뒤 Index Only Scan on idx_ledger_entry_date_account_side_amount, Buffers 89, 2.51ms |
+| 전표 목록(status=POSTED, 2026-05, 5,177건) | Bitmap Heap Scan on idx_voucher_date, Buffers 294 | 바꾸지 않았다 |
+
+적재 직후 index only scan이 선택되지 않은 것은 새로 넣은 페이지의 visibility map이 비어 힙을 봐야 했기 때문입니다. 운영에서는 autovacuum이 채웁니다. 두 인덱스는 V4 마이그레이션에 넣었고 H2에서도 만들어집니다. 적재 스크립트는 저장소에 넣지 않았습니다(한 번 쓰는 벤치마크).
+
