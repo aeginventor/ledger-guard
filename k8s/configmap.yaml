@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ledger-guard-config
+  labels:
+    app: ledger-guard
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://ledger-guard-db:5432/ledger
+  LEDGER_GUARD_DRAFTER: fixture
+  TZ: Asia/Seoul

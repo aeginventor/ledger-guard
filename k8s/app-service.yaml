@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ledger-guard
+  labels:
+    app: ledger-guard
+spec:
+  type: ClusterIP
+  selector:
+    app: ledger-guard
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
