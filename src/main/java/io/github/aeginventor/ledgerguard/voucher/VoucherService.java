@@ -12,6 +12,8 @@ import io.github.aeginventor.ledgerguard.validation.LineData;
 import io.github.aeginventor.ledgerguard.validation.Overall;
 import io.github.aeginventor.ledgerguard.validation.ValidationContextFactory;
 import io.github.aeginventor.ledgerguard.validation.ValidationEngine;
+import io.github.aeginventor.ledgerguard.validation.ValidationMetrics;
+import io.github.aeginventor.ledgerguard.validation.Stage;
 import io.github.aeginventor.ledgerguard.validation.ValidationResult;
 import io.github.aeginventor.ledgerguard.validation.VoucherData;
 import io.github.aeginventor.ledgerguard.voucher.dto.ApproveRequest;
@@ -41,16 +43,18 @@ public class VoucherService {
     private final LedgerEntryRepository ledgerEntryRepository;
     private final ValidationContextFactory contextFactory;
     private final ValidationEngine engine;
+    private final ValidationMetrics metrics;
     private final Clock clock;
 
     public VoucherService(VoucherRepository voucherRepository, AccountRepository accountRepository,
             LedgerEntryRepository ledgerEntryRepository, ValidationContextFactory contextFactory,
-            ValidationEngine engine, Clock clock) {
+            ValidationEngine engine, ValidationMetrics metrics, Clock clock) {
         this.voucherRepository = voucherRepository;
         this.accountRepository = accountRepository;
         this.ledgerEntryRepository = ledgerEntryRepository;
         this.contextFactory = contextFactory;
         this.engine = engine;
+        this.metrics = metrics;
         this.clock = clock;
     }
 
@@ -59,6 +63,7 @@ public class VoucherService {
     public VoucherResponse create(VoucherRequest request) {
         VoucherData data = request.toVoucherData();
         ValidationResult result = engine.evaluate(contextFactory.forSave(data));
+        metrics.record(Stage.SAVE, result);
 
         Voucher voucher = new Voucher(request.voucherDate(), request.description(), request.counterpartyName(),
                 request.counterpartyBizNo(), request.evidenceType(), request.vatType(), request.supplyAmount(),
@@ -133,6 +138,7 @@ public class VoucherService {
                     line.getAmount(), "역분개 " + original.getId() + "번 전표 " + line.getLineNo() + "번 라인"));
         }
         ValidationResult saveResult = engine.evaluate(contextFactory.forSave(toVoucherData(reversal)));
+        metrics.record(Stage.SAVE, saveResult);
         if (saveResult.overall() == Overall.FAIL) {
             throw new ConflictException("역분개 전표가 저장 규칙을 통과하지 못했다", saveResult);
         }
@@ -147,6 +153,7 @@ public class VoucherService {
     /** 승인 단계 규칙을 다시 돌리고 원장에 전기한다. 승인과 역분개가 함께 쓴다. */
     private void post(Voucher voucher, String approver, String reason) {
         ValidationResult result = engine.evaluate(contextFactory.forApproval(toVoucherData(voucher), voucher, approver));
+        metrics.record(Stage.APPROVE, result);
         if (result.overall() == Overall.FAIL) {
             throw new ConflictException("FAIL 판정 전표는 승인할 수 없다", result);
         }

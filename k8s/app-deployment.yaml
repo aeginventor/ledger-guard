@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: ledger-guard:0.1.0
+          image: ledger-guard:0.2.0
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8080

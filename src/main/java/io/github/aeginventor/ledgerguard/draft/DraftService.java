@@ -4,6 +4,8 @@ import io.github.aeginventor.ledgerguard.account.Account;
 import io.github.aeginventor.ledgerguard.account.AccountRepository;
 import io.github.aeginventor.ledgerguard.validation.ValidationContextFactory;
 import io.github.aeginventor.ledgerguard.validation.ValidationEngine;
+import io.github.aeginventor.ledgerguard.validation.ValidationMetrics;
+import io.github.aeginventor.ledgerguard.validation.Stage;
 import io.github.aeginventor.ledgerguard.validation.ValidationResult;
 import io.github.aeginventor.ledgerguard.validation.VoucherData;
 import io.github.aeginventor.ledgerguard.voucher.dto.DraftLineResponse;
@@ -27,17 +29,20 @@ public class DraftService {
     private final AccountRepository accountRepository;
     private final ValidationContextFactory contextFactory;
     private final ValidationEngine engine;
+    private final ValidationMetrics metrics;
 
     public DraftService(List<JournalDrafter> drafters,
             @Value("${ledger-guard.drafter:fixture}") String preferred,
             AccountRepository accountRepository,
             ValidationContextFactory contextFactory,
-            ValidationEngine engine) {
+            ValidationEngine engine,
+            ValidationMetrics metrics) {
         this.drafters = drafters;
         this.preferred = preferred;
         this.accountRepository = accountRepository;
         this.contextFactory = contextFactory;
         this.engine = engine;
+        this.metrics = metrics;
     }
 
     public JournalDrafter activeDrafter() {
@@ -61,6 +66,7 @@ public class DraftService {
                 request.counterpartyBizNo(), request.evidenceType(), request.vatType(), request.supplyAmount(),
                 result.lines());
         ValidationResult validation = engine.evaluate(contextFactory.forDraft(data, result.problems()));
+        metrics.record(Stage.DRAFT, validation);
 
         Function<String, String> nameOf = code -> code == null ? null : names.get(code);
         List<DraftLineResponse> lines = result.lines().stream()

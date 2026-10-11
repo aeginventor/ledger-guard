@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'io.github.aeginventor'
-version = '0.1.0'
+version = '0.2.0'
 description = 'AI 분개 초안을 규칙 코드로 판정하는 전표 검증 API'
 
 java {
@@ -23,6 +23,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6'
     implementation 'org.flywaydb:flyway-core'
     implementation 'org.flywaydb:flyway-database-postgresql'
