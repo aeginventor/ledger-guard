@@ -108,7 +108,7 @@ class OpenAiJournalDrafterTest {
         DraftResult result = drafter.draft(request, accounts);
 
         assertThat(result.lines()).isEmpty();
-        assertThat(result.problems().get(0)).startsWith("OpenAI 호출 실패");
+        assertThat(result.problems().get(0)).startsWith("LLM 호출 실패");
     }
 
     @Test
@@ -129,5 +129,40 @@ class OpenAiJournalDrafterTest {
         String prompt = OpenAiJournalDrafter.systemPrompt(accounts);
         assertThat(prompt).contains("830 소모품비").contains("135 부가세대급금").doesNotContain("150 제품");
         assertThat(prompt).contains("원 미만을 버린다");
+    }
+
+    @Test
+    void extractsJsonObjectFromFencedOrChattyContent() {
+        assertThat(OpenAiJournalDrafter.extractJsonObject("```json\n{\"lines\":[]}\n```")).isEqualTo("{\"lines\":[]}");
+        assertThat(OpenAiJournalDrafter.extractJsonObject("초안입니다: {\"lines\":[{\"a\":1}]} 끝")).isEqualTo("{\"lines\":[{\"a\":1}]}");
+        assertThat(OpenAiJournalDrafter.extractJsonObject("lines 없음")).isEqualTo("lines 없음");
+        DraftResult fenced = drafter.parseDraft("```json\n{\"lines\":[{\"accountCode\":\"830\",\"side\":\"debit\",\"amount\":\"100,000\"}]}\n```");
+        assertThat(fenced.problems()).isEmpty();
+        assertThat(fenced.lines()).hasSize(1);
+        assertThat(fenced.lines().get(0).side()).isEqualTo(Side.DEBIT);
+        assertThat(fenced.lines().get(0).amount()).isEqualByComparingTo(BigDecimal.valueOf(100_000));
+    }
+
+    @Test
+    void reviseSendsPreviousDraftAndFindingsBack() throws Exception {
+        server.expect(requestTo(BASE + OpenAiJournalDrafter.COMPLETIONS_PATH))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(content().string(containsString("규칙 검증에 실패했다")))
+                .andExpect(content().string(containsString("차변 합계 110000원과 대변 합계 100000원이 다르다")))
+                .andExpect(content().string(containsString("\"role\":\"assistant\"")))
+                .andRespond(withSuccess(completion("{\"lines\":[{\"accountCode\":\"830\",\"side\":\"DEBIT\",\"amount\":100000},"
+                        + "{\"accountCode\":\"135\",\"side\":\"DEBIT\",\"amount\":10000},"
+                        + "{\"accountCode\":\"253\",\"side\":\"CREDIT\",\"amount\":110000}]}"), MediaType.APPLICATION_JSON));
+        DraftResult previous = new DraftResult(List.of(
+                new LineData(1, "830", Side.DEBIT, BigDecimal.valueOf(100_000), null),
+                new LineData(2, "135", Side.DEBIT, BigDecimal.valueOf(10_000), null),
+                new LineData(3, "253", Side.CREDIT, BigDecimal.valueOf(100_000), null)), List.of(), "첫 시도");
+        DraftResult revised = drafter.revise(request, accounts, previous,
+                List.of("차변 합계 110000원과 대변 합계 100000원이 다르다"));
+        assertThat(revised.problems()).isEmpty();
+        assertThat(revised.lines()).hasSize(3);
+        assertThat(revised.lines().get(2).amount()).isEqualByComparingTo(BigDecimal.valueOf(110_000));
+        assertThat(revised.note()).contains("되먹여");
+        server.verify();
     }
 }

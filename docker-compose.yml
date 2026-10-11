@@ -24,7 +24,11 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-ledger}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-ledger}
       LEDGER_GUARD_DRAFTER: ${LEDGER_GUARD_DRAFTER:-fixture}
+      LEDGER_GUARD_MAX_REVISIONS: ${LEDGER_GUARD_MAX_REVISIONS:-2}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_JSON_MODE: ${OPENAI_JSON_MODE:-true}
       TZ: Asia/Seoul
     depends_on:
       db:

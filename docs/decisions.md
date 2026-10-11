@@ -198,3 +198,17 @@
 - 이유: 원장이 유일한 진실이어야 하고, 연도를 넘기려면 수익과 비용을 이익잉여금으로 마감하는 결산 분개가 먼저 있어야 한다. 결산이 없는 상태에서 전년도까지 누계하면 손익 계정이 해를 넘어 쌓여 틀린 숫자가 된다
 - 사용자 확인 필요: 예 (연 단위 누계가 의도와 맞는지, 결산 분개를 언제 넣을지)
 
+## 29. 초안이 FAIL이면 사유를 되먹여 다시 쓰게 하되 상한은 2회다 (llm-drafter 브랜치)
+
+- 결정: `DraftService`가 초안 판정이 FAIL이면 사유 문장을 작성기의 `revise`에 넘겨 고친 초안을 받고 다시 판정한다. 최대 `ledger-guard.draft.max-revisions`(기본 2)회. 응답 `attempts`에 작성기 호출 횟수를 적는다. fixture 작성기는 `revise`가 null을 돌려줘 루프에 들어가지 않는다
+- 대안: 수정 없이 첫 초안만 판정. 상한 없이 PASS까지 반복
+- 이유: 판정 사유는 사람이 읽으라고 만든 문장이라 LLM에게도 그대로 되먹일 수 있다. 상한이 없으면 같은 실수를 반복하는 모델에 묶인다. AI Agent 수업에서 Supervisor의 재작업 상한으로 종료를 보장한 것과 같은 구조다. 판정은 어느 시도에서든 같은 규칙 엔진이 하므로 되먹임이 규칙을 약하게 만들지 않는다
+- 사용자 확인 필요: 예
+
+## 30. 실제 LLM 호출은 OpenAI 호환 엔드포인트로 통일하고 로컬 sLLM(Ollama)으로 실측한다 (llm-drafter 브랜치)
+
+- 결정: 어댑터는 그대로 두고 `OPENAI_BASE_URL`을 Ollama의 `http://localhost:11434`로, `OPENAI_API_KEY`를 아무 값(ollama)으로, `OPENAI_MODEL`을 `qwen2.5:3b`로 주면 로컬 모델이 초안을 쓴다. 프롬프트는 RICE(역할, 지시, 맥락, 예시) 순서와 few-shot 2개로 다시 썼고, 코드 펜스나 설명 문장이 섞인 응답에서 첫 JSON 객체만 뽑는 보정을 넣었다. `OPENAI_JSON_MODE=false`로 JSON 모드를 끌 수 있다
+- 대안: Spring AI의 Ollama starter. Ollama 전용 API(`/api/chat`)
+- 이유: OpenAI 키가 없어 실측하려면 로컬 모델이 필요했고, Ollama는 OpenAI chat completions 형식을 그대로 받으므로 코드 분기가 없다. 키가 생기면 환경변수 세 개만 바꾸면 된다. sLLM 수업의 Qwen2.5를 그대로 썼다
+- 사용자 확인 필요: 예
+

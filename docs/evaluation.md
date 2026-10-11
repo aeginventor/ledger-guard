@@ -8,7 +8,7 @@
 ./gradlew test
 ```
 
-결과: 테스트 128개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계를 더하면서 28개가 늘었습니다.
+결과: 테스트 132개(llm-drafter 브랜치), 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계를 더하면서 28개가 늘었습니다.
 
 | 테스트 클래스 | 개수 | 내용 |
 |---|---|---|
@@ -16,7 +16,8 @@
 | validation.BusinessNumberValidatorTest | 13 | 사업자등록번호 체크섬, 형식, 하이픈 |
 | validation.ValidationEngineTest | 5 | 코드 순 정렬(R01부터 R13), 사유 전부 수집, FAIL > REVIEW > PASS |
 | draft.FixtureJournalDrafterTest | 7 | fixture 로딩, 금액 채우기, 결제 계정 선택, 매칭 실패 |
-| draft.OpenAiJournalDrafterTest | 6 | 모의 서버 응답 파싱, JSON 파싱 실패, 서버 오류, 프롬프트 내용 |
+| draft.OpenAiJournalDrafterTest | 8 | 모의 서버 응답 파싱, JSON 파싱 실패, 서버 오류, 프롬프트 내용, 코드 펜스 추출, 되먹임 요청 |
+| draft.DraftRevisionLoopTest | 2 | 가짜 작성기로 수정 루프 상한(1 + 2회)과 조기 종료 |
 | draft.DrafterSelectionTest | 1 | 키가 있을 때 OpenAI 작성기 등록과 선택 |
 | api.VoucherFlowIntegrationTest | 2 | 초안 → 저장 → 승인 → 시산표, fixture 없는 설명의 R11 FAIL |
 | api.ApprovalRejectionIntegrationTest | 5 | FAIL 전표 승인 409, REVIEW 전표 사유 필수, 작성자 자기 승인 R12 409, 작성자 없는 전표 400, 404와 400 |

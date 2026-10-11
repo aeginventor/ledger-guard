@@ -117,6 +117,23 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 
 GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행하고, main에 push되면 이미지를 GHCR에 올립니다. 첫 실행은 Linux의 시각 정밀도 차이로 실패했고 수정 뒤 [통과했습니다](https://github.com/aeginventor/ledger-guard/actions/runs/38120768628). 전체 목록은 [Actions](https://github.com/aeginventor/ledger-guard/actions)에 있습니다.
 
+## 실제 LLM 호출 (llm-drafter 브랜치)
+
+이 브랜치는 작성기를 실제 LLM으로 돌립니다. OpenAI 키가 없어 로컬 sLLM(Ollama의 qwen2.5:3b)을 OpenAI 호환 엔드포인트로 붙여 실측했고, 키가 있으면 환경변수만 바꾸면 OpenAI로 돌아갑니다. 실측 결과는 [docs/llm-eval.md](docs/llm-eval.md)에 있습니다.
+
+```bash
+brew install ollama && ollama serve &
+ollama pull qwen2.5:3b
+LEDGER_GUARD_DRAFTER=openai OPENAI_API_KEY=ollama OPENAI_BASE_URL=http://host.docker.internal:11434 OPENAI_MODEL=qwen2.5:3b \
+  docker compose up --build -d
+python3 experiments/llm_eval.py --base http://localhost:8080 --out docs/llm-eval.md
+
+# OpenAI로 돌릴 때
+LEDGER_GUARD_DRAFTER=openai OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4o-mini docker compose up --build -d
+```
+
+초안 판정이 FAIL이면 사유를 되먹여 다시 쓰게 하고, 최대 2회에서 멈춥니다. 응답의 `attempts`가 호출 횟수입니다. 판정은 어느 시도에서든 같은 규칙 엔진이 합니다.
+
 ## 한계와 다음 작업
 
 - 실제 LLM을 호출하지 않았습니다. 기본 작성기는 `src/main/resources/drafts/*.json`의 고정 초안을 거래 설명 키워드로 고르는 fixture입니다. OpenAI 작성기는 `OPENAI_API_KEY`가 있을 때만 활성화되며 이번 작업에서는 키가 없어 호출하지 않았습니다.

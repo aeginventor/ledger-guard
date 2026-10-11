@@ -19,12 +19,13 @@ public class OpenAiDrafterConfig {
             @Value("${ledger-guard.openai.api-key}") String apiKey,
             @Value("${ledger-guard.openai.base-url:https://api.openai.com}") String baseUrl,
             @Value("${ledger-guard.openai.model:gpt-4o-mini}") String model,
+            @Value("${ledger-guard.openai.json-mode:true}") boolean jsonMode,
             ObjectMapper objectMapper) {
         RestClient restClient = builder
                 .baseUrl(baseUrl)
                 .defaultHeader(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .build();
-        return new OpenAiJournalDrafter(restClient, model, objectMapper);
+        return new OpenAiJournalDrafter(restClient, model, objectMapper, jsonMode);
     }
 }
