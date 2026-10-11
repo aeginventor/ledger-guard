@@ -219,3 +219,31 @@
 - 이유: initialDelay는 노드가 느리면 모자라고 빠르면 낭비다. startupProbe는 기동이 끝난 시점을 직접 본다. kind에서 다시 돌려 확인하지는 않았고 dry-run만 통과했다
 - 사용자 확인 필요: 예
 
+## 34. 규칙 엔진 실행 시간은 AOP로 잰다
+
+- 결정: `ValidationTimingAspect`가 `ValidationEngine.evaluate`를 감싸 `ledger_guard_validation_seconds{stage}` Timer에 남긴다. 엔진 코드는 손대지 않는다
+- 대안: 엔진 안에서 직접 재기. 서비스 계층에서 재기
+- 이유: 엔진은 Spring을 모르는 순수 코드로 두고 싶었다. AOP는 프록시라 빈 밖에서 부를 때만 걸리고 자기 호출은 재지 않는다는 한계를 Spring Boot 수업에서 배운 대로 주석에 적었다
+- 사용자 확인 필요: 예
+
+## 35. CI 첫 단계에서 비밀값 유출을 검사한다
+
+- 결정: gitleaks 액션이 전체 이력을 검사한 뒤 테스트가 돈다
+- 대안: 커밋 전 훅. 검사 없음
+- 이유: 저장소가 공개이고 `.env.example`과 `secret.example.yaml`처럼 비밀값 모양의 파일이 있어 실수로 실제 값이 들어가면 바로 알아야 한다. Git 수업의 "비밀값 커밋 금지"를 사람 주의가 아니라 CI로 옮겼다
+- 사용자 확인 필요: 예
+
+## 36. 전표 검문소 정적 UI 한 장을 둔다
+
+- 결정: `src/main/resources/static/index.html` 하나. 빌드 도구 없이 fetch로 초안, 저장, 승인, 역분개, 시산표를 부른다. 판정 사유를 수준별 색으로 보여 준다
+- 대안: Vue나 React 프론트. UI 없음
+- 이유: 면접에서 흐름을 화면으로 보여 줄 수 있고, HTML과 JavaScript 수업의 범위 안에서 끝난다. 사용자 흐름(작성자가 초안을 받고 저장, 승인자가 승인)과 운영자 흐름(지표와 알림)을 나눠 적었다
+- 사용자 확인 필요: 예
+
+## 37. 런타임 이미지를 alpine JRE로 바꾼다
+
+- 결정: 2단계 베이스를 `eclipse-temurin:21-jre`에서 `eclipse-temurin:21-jre-alpine`으로. 이미지 610MB에서 412MB. 사용자는 그대로 UID 10001
+- 대안: debian 기반 유지. jlink로 JRE를 직접 깎기
+- 이유: 컨테이너 수업에서 배운 대로 런타임에 필요 없는 것을 빼는 가장 싼 방법이다. musl 때문에 문제가 생기는 네이티브 의존성이 이 앱에는 없다. jlink는 더 줄이겠지만 유지 비용이 든다
+- 사용자 확인 필요: 예
+

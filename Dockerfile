@@ -7,15 +7,13 @@ RUN ./gradlew --no-daemon --quiet dependencies > /dev/null 2>&1 || true
 COPY src ./src
 RUN ./gradlew --no-daemon --quiet bootJar -x test
 
-# 2단계: JRE만 있는 작은 이미지. curl은 compose와 K8s healthcheck용이다.
+# 2단계: JRE만 있는 작은 이미지(alpine, 412MB. debian 기반은 610MB였다). curl은 compose와 K8s healthcheck용이다.
 # 사용자는 숫자 UID로 지정한다. 쿠버네티스의 runAsNonRoot는 이미지의 USER가 이름(app)이면 비루트인지 검증하지 못해
 # CreateContainerConfigError를 낸다(kind 실측, docs/evaluation.md).
-FROM eclipse-temurin:21-jre
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd --system --gid 10001 app \
-    && useradd --system --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin app
+FROM eclipse-temurin:21-jre-alpine
+RUN apk add --no-cache curl \
+    && addgroup -S -g 10001 app \
+    && adduser -S -u 10001 -G app -h /app -s /sbin/nologin app
 WORKDIR /app
 COPY --from=build /workspace/build/libs/*.jar /app/app.jar
 USER 10001:10001

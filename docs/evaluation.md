@@ -8,7 +8,7 @@
 ./gradlew test
 ```
 
-결과: 테스트 129개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계와 규칙 목록을 더하면서 29개가 늘었습니다.
+결과: 테스트 130개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계와 규칙 목록을 더하면서 29개가 늘었습니다.
 
 | 테스트 클래스 | 개수 | 내용 |
 |---|---|---|
@@ -24,7 +24,7 @@
 | api.ReversalIntegrationTest | 5 | 역분개 차대 반전과 즉시 전기와 시산표 상쇄, POSTED만 역분개, 역분개의 R12, 마감 달 역분개 R07, 요청 검증 |
 | api.ConcurrentApprovalIntegrationTest | 3 | 같은 전표 동시 승인 2건 중 200과 409 각 1건, 원장 라인 3개 (3회 반복) |
 | voucher.OptimisticLockTest | 1 | 트랜잭션 A가 version 0을 읽은 사이 B가 커밋하면 A는 OptimisticLockingFailureException |
-| api.HealthAndDocsIntegrationTest | 4 | readiness와 liveness, 계정 30건, OpenAPI, Prometheus 카운터, 규칙 목록 13개 |
+| api.HealthAndDocsIntegrationTest | 5 | readiness와 liveness, 계정 30건, OpenAPI, Prometheus 카운터와 AOP 타이머, 규칙 목록 13개, 정적 UI |
 | api.TrialBalanceScopeIntegrationTest | 1 | 1월과 2월 전기 뒤 2월의 month 범위와 ytd 범위 비교. 기초 잔액, 당월 발생액, 누계, 잘못된 scope 400 |
 | golden.GoldenSetEvaluationTest | 3 | 아래 골든셋 평가 |
 | golden.MutationEvaluationTest | 3 | 아래 변이 평가 |
@@ -218,4 +218,17 @@ compose의 PostgreSQL 16.15에 `generate_series`로 전표 50,000건(거래처 2
 | 전표 목록(status=POSTED, 2026-05, 5,177건) | Bitmap Heap Scan on idx_voucher_date, Buffers 294 | 바꾸지 않았다 |
 
 적재 직후 index only scan이 선택되지 않은 것은 새로 넣은 페이지의 visibility map이 비어 힙을 봐야 했기 때문입니다. 운영에서는 autovacuum이 채웁니다. 두 인덱스는 V4 마이그레이션에 넣었고 H2에서도 만들어집니다. 적재 스크립트는 저장소에 넣지 않았습니다(한 번 쓰는 벤치마크).
+
+## 9. 이미지 크기 (2026-10-12)
+
+| 베이스 | 크기 | 비고 |
+|---|---|---|
+| eclipse-temurin:21-jre (debian) | 610MB | 10월 11일과 12일 새벽의 이미지 |
+| eclipse-temurin:21-jre-alpine | 412MB | 같은 jar, curl 설치, UID 10001. `docker run --rm --entrypoint id` 결과 `uid=10001(app)` |
+
+alpine으로 바꾼 뒤 compose와 smoke를 다시 돌려 확인했습니다(아래 10절).
+
+## 10. alpine 이미지로 compose 재실측 (2026-10-12)
+
+`docker compose up --build -d` 뒤 smoke.sh 흐름(readiness UP, 초안, 저장 DRAFT, 승인 POSTED, 차대 불일치 REJECTED와 승인 409, 시산표)이 debian 이미지와 같은 결과였습니다. 정적 UI `/index.html`은 200, `/actuator/prometheus`에 `ledger_guard_validation_seconds_count{stage="draft"} 1`, `{stage="save"} 2`, `{stage="approve"} 2`가 찍혔고 승인 단계 최대 소요는 0.002초였습니다. 이미지 `ledger-guard:local`은 412MB입니다.
 

@@ -54,7 +54,16 @@ class HealthAndDocsIntegrationTest extends ApiTestSupport {
         assertThat(body).contains("overall=\"fail\"");
         assertThat(body).contains("stage=\"save\"");
         assertThat(body).contains("ledger_guard_findings_total{");
+        assertThat(body).contains("ledger_guard_validation_seconds_count{");
+        assertThat(body).contains("ledger_guard_validation_seconds_max{");
         assertThat(body).contains("rule=\"R01\"");
         assertThat(body).contains("severity=\"fail\"");
+    }
+
+    @Test
+    void staticCheckpointPageIsServedAtRoot() throws Exception {
+        var response = mockMvc.perform(MockMvcRequestBuilders.get("/index.html")).andReturn().getResponse();
+        assertThat(response.getStatus()).isEqualTo(200);
+        assertThat(response.getContentAsString(java.nio.charset.StandardCharsets.UTF_8)).contains("전표 검문소");
     }
 }
