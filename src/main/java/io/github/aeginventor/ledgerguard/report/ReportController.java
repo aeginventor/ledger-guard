@@ -19,8 +19,11 @@ public class ReportController {
     }
 
     @GetMapping("/trial-balance")
-    @Operation(summary = "월별 합계잔액시산표", description = "month=yyyy-MM. 전기된 원장 항목만 집계하며 balanced 필드로 총차변과 총대변이 같은지 보여준다.")
-    public TrialBalanceResponse trialBalance(@RequestParam String month) {
-        return trialBalanceService.trialBalance(month);
+    @Operation(summary = "합계잔액시산표", description = "month=yyyy-MM. scope=month(기본)는 해당 월에 전기된 원장 항목만, "
+            + "scope=ytd는 그 해 1월 1일부터 해당 월 말까지의 누계를 집계하고 행마다 기초 잔액과 당월 발생액을 함께 준다. "
+            + "balanced 필드로 총차변과 총대변이 같은지 보여준다.")
+    public TrialBalanceResponse trialBalance(@RequestParam String month,
+            @RequestParam(required = false, defaultValue = "month") String scope) {
+        return trialBalanceService.trialBalance(month, scope);
     }
 }

@@ -145,8 +145,11 @@ curl -s http://localhost:8080/api/periods
 
 ## 시산표
 
+`scope=month`(기본)는 그 달에 전기된 원장 항목만 집계합니다. `scope=ytd`는 그 해 1월 1일부터 해당 월 말까지의 누계이고, 행마다 `openingBalance`(1월 1일부터 전월 말까지의 잔액), `periodDebit`과 `periodCredit`(당월 발생액)이 더 나옵니다. `debitTotal`, `creditTotal`, `balance`는 누계입니다. 연도를 넘는 이월과 결산 분개는 없습니다.
+
 ```bash
 curl -s 'http://localhost:8080/api/reports/trial-balance?month=2026-10'
+curl -s 'http://localhost:8080/api/reports/trial-balance?month=2026-10&scope=ytd'
 ```
 
 ```json
@@ -157,7 +160,12 @@ curl -s 'http://localhost:8080/api/reports/trial-balance?month=2026-10'
  "totalDebit":110000,"totalCredit":110000,"balanced":true}
 ```
 
-`balance`는 차변합에서 대변합을 뺀 값입니다. 양수이면 차변 잔액, 음수이면 대변 잔액입니다.
+`balance`는 차변합에서 대변합을 뺀 값입니다. 양수이면 차변 잔액, 음수이면 대변 잔액입니다. `scope=ytd` 응답의 행 예시는 아래와 같습니다(1월에 100,000원, 2월에 50,000원을 소모품비로 전기한 뒤 2월 조회).
+
+```json
+{"accountCode":"830","accountName":"소모품비","type":"EXPENSE","openingBalance":100000,"periodDebit":50000,"periodCredit":0,
+ "debitTotal":150000,"creditTotal":0,"balance":150000,"balanceSide":"DEBIT"}
+```
 
 ## 지표
 

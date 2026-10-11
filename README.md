@@ -68,7 +68,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 | `POST /api/vouchers/{id}/approve` | 재검증 뒤 승인과 전기. FAIL은 409, REVIEW는 사유가 없으면 409, 작성자가 자기 전표를 승인하면 R12로 409, 같은 전표를 동시에 승인하면 늦은 쪽이 409 |
 | `POST /api/vouchers/{id}/reverse` | 역분개. 전기된 전표의 차대를 뒤집은 전표를 만들어 바로 전기하고 원전표를 REVERSED로 바꾼다. 작성자, 승인자, 사유 필수 |
 | `POST /api/periods/{yyyymm}/close` | 기간 마감 |
-| `GET /api/reports/trial-balance?month=2026-10` | 월별 합계잔액시산표. `balanced` 필드로 총차변과 총대변 일치 여부 표시 |
+| `GET /api/reports/trial-balance?month=2026-10&scope=month` | 합계잔액시산표. `scope=month`(기본)는 그 달에 전기된 항목만, `scope=ytd`는 그 해 1월부터의 누계이며 행마다 기초 잔액과 당월 발생액을 준다. `balanced` 필드로 총차변과 총대변 일치 여부 표시 |
 | `/actuator/health`, `/actuator/health/readiness`, `/actuator/health/liveness` | 상태 확인 |
 | `/actuator/prometheus` | 규칙별 사유 수와 판정 수 카운터 |
 
@@ -98,7 +98,7 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 
 ## 검증
 
-2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 127개가 모두 통과했습니다. 규칙 단위 테스트 68개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 19개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표, 증빙 일치 규칙을 더하며 27개가 늘었습니다.
+2026년 10월 12일 로컬(macOS, Temurin 21.0.11, Gradle 9.6.1 Wrapper)에서 `./gradlew test`를 실행해 테스트 128개가 모두 통과했습니다. 규칙 단위 테스트 68개, 사업자등록번호 체크섬 13개, 엔진 5개, 작성기 14개, API 통합 테스트 20개, 낙관적 락 1개, 골든셋 평가 3개, 변이 평가 3개, 컨텍스트 로딩 1개입니다. 10월 11일의 100개에서 직무 분리, 역분개, 낙관적 락, 변이 평가, 지표, 증빙 일치 규칙, 시산표 누계를 더하며 28개가 늘었습니다.
 
 골든셋과 변이 평가 결과는 아래와 같습니다. 재현 명령과 상세 표는 [docs/evaluation.md](docs/evaluation.md)에 있습니다.
 
@@ -124,7 +124,7 @@ GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행�
 - 기업업무추진비처럼 매입세액이 공제되지 않는 거래는 자동으로 가려내지 않습니다. 총액을 비용으로 적고 `vatType`을 `NA`로 두는 방식으로만 표현할 수 있습니다.
 - 세법 조문 번호는 작성자가 직접 확인해야 합니다. 확신이 없는 곳은 코드와 문서에 "확인 필요"로 표시했습니다. 조문을 읽어 보니 원 미만 버림의 근거로 적은 국고금관리법 제47조는 세금계산서 세액 절사를 직접 정한 조문이 아닐 가능성이 커서, 작성자가 근거를 다시 찾아야 합니다([docs/legal-basis.md](docs/legal-basis.md)).
 - 인증과 권한이 없습니다. 작성자와 승인자는 요청 본문의 문자열이라 R12의 직무 분리는 이름만 바꿔 적으면 우회됩니다. 인증과 역할을 붙이는 것이 다음 단계입니다.
-- 시산표는 해당 월에 전기된 원장 항목만 집계합니다. 이월 잔액과 누적 잔액은 다루지 않습니다.
+- 시산표의 누계는 같은 해 1월 1일부터입니다. 연도를 넘는 이월과 결산 분개(수익과 비용을 이익잉여금으로 마감)는 다루지 않습니다.
 - 전표 수정과 삭제, 다중 통화, 결산 분개는 없습니다. 틀린 전기는 역분개로만 되돌립니다.
 - 경조금의 20만원 기준과 법인 명의 카드 여부는 규칙이 보지 않습니다([docs/rules.md](docs/rules.md)의 "규칙이 보지 않는 것"). 면세 거래에 세금계산서가 붙은 조합은 조문을 읽은 뒤 R13으로 더했습니다.
 - 테스트는 H2를 PostgreSQL 모드로 사용합니다. PostgreSQL 고유 동작은 compose와 kind 실행으로만 확인했습니다.

@@ -8,7 +8,7 @@
 ./gradlew test
 ```
 
-결과: 테스트 127개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙을 더하면서 27개가 늘었습니다.
+결과: 테스트 128개, 실패 0개. 테스트는 H2(PostgreSQL 모드)로 돌며 Docker가 필요 없습니다. 10월 11일에는 100개였고, 직무 분리와 역분개와 낙관적 락과 변이 평가와 지표와 증빙 일치 규칙과 시산표 누계를 더하면서 28개가 늘었습니다.
 
 | 테스트 클래스 | 개수 | 내용 |
 |---|---|---|
@@ -25,6 +25,7 @@
 | api.ConcurrentApprovalIntegrationTest | 3 | 같은 전표 동시 승인 2건 중 200과 409 각 1건, 원장 라인 3개 (3회 반복) |
 | voucher.OptimisticLockTest | 1 | 트랜잭션 A가 version 0을 읽은 사이 B가 커밋하면 A는 OptimisticLockingFailureException |
 | api.HealthAndDocsIntegrationTest | 3 | readiness와 liveness, 계정 30건, OpenAPI, Prometheus 카운터 |
+| api.TrialBalanceScopeIntegrationTest | 1 | 1월과 2월 전기 뒤 2월의 month 범위와 ytd 범위 비교. 기초 잔액, 당월 발생액, 누계, 잘못된 scope 400 |
 | golden.GoldenSetEvaluationTest | 3 | 아래 골든셋 평가 |
 | golden.MutationEvaluationTest | 3 | 아래 변이 평가 |
 | LedgerGuardApplicationTests | 1 | 컨텍스트 로딩, 기본 작성기 fixture, OpenAI 빈 없음 |
