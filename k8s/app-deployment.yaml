@@ -14,6 +14,17 @@ spec:
       labels:
         app: ledger-guard
     spec:
+      # DB StatefulSet이 준비되기 전에 앱이 뜨면 Flyway 연결 실패로 종료되고 재시작이 반복된다(kind 실측에서 재시작 2회).
+      # compose의 depends_on(condition: service_healthy)에 해당하는 것이 쿠버네티스에는 없으므로 초기화 컨테이너로 DB 포트를 기다린다.
+      initContainers:
+        - name: wait-for-db
+          image: busybox:1.37
+          command: ["sh", "-c", "until nc -z ledger-guard-db 5432; do echo waiting for db; sleep 2; done"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
       containers:
         - name: app
           image: ledger-guard:0.2.0
@@ -50,3 +61,5 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001

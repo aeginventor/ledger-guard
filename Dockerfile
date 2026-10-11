@@ -8,15 +8,17 @@ COPY src ./src
 RUN ./gradlew --no-daemon --quiet bootJar -x test
 
 # 2단계: JRE만 있는 작은 이미지. curl은 compose와 K8s healthcheck용이다.
+# 사용자는 숫자 UID로 지정한다. 쿠버네티스의 runAsNonRoot는 이미지의 USER가 이름(app)이면 비루트인지 검증하지 못해
+# CreateContainerConfigError를 낸다(kind 실측, docs/evaluation.md).
 FROM eclipse-temurin:21-jre
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/* \
-    && groupadd --system app \
-    && useradd --system --gid app --home-dir /app --shell /usr/sbin/nologin app
+    && groupadd --system --gid 10001 app \
+    && useradd --system --uid 10001 --gid 10001 --home-dir /app --shell /usr/sbin/nologin app
 WORKDIR /app
 COPY --from=build /workspace/build/libs/*.jar /app/app.jar
-USER app
+USER 10001:10001
 EXPOSE 8080
 ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75.0"
 HEALTHCHECK --interval=10s --timeout=3s --start-period=40s --retries=6 \
