@@ -1,6 +1,6 @@
 # ledger-guard (전표지기)
 
-거래 설명을 받아 분개 초안을 만들고, 규칙 엔진이 차대평형, 부가세, 계정과목, 세금계산서 요건, 기간 마감을 판정해 PASS, REVIEW, FAIL과 사유를 돌려주는 소규모 회계 전표 검증 API입니다. 사람이 승인한 전표만 원장에 전기되고 시산표로 집계됩니다.
+거래 설명을 받아 분개 초안을 만들고, 규칙 엔진이 차대평형, 부가세, 계정과목, 세금계산서 요건, 기간 마감, 직무 분리를 판정해 PASS, REVIEW, FAIL과 사유를 돌려주는 소규모 회계 전표 검증 API입니다. 사람이 승인한 전표만 원장에 전기되고 시산표로 집계되며, 전기된 전표는 지우지 않고 역분개로 상쇄합니다.
 
 초안은 "해석", 판정과 계산은 "규칙 코드"가 맡습니다. 초안을 만드는 쪽이 LLM이든 고정 데이터든 판정 결과는 같은 규칙 코드와 같은 골든셋으로 검증됩니다.
 
@@ -16,7 +16,7 @@ LLM이 분개 초안을 만들어 주는 흐름이 늘고 있지만, 초안을 �
 flowchart LR
     A[거래 설명 입력] --> B[JournalDrafter<br/>fixture 또는 openai]
     B --> C[분개 초안 JSON]
-    C --> D[규칙 엔진 R01~R11<br/>모든 규칙 실행, 사유 수집]
+    C --> D[규칙 엔진 R01~R12<br/>모든 규칙 실행, 사유 수집]
     D --> E{판정}
     E -->|PASS| F[DRAFT 저장]
     E -->|REVIEW| G[REVIEW 저장]
@@ -25,6 +25,8 @@ flowchart LR
     G -->|사유 입력| I
     I --> J[재검증 후 POSTED<br/>LedgerEntry 생성]
     J --> K[시산표 집계]
+    J -->|틀린 전기| L[역분개 전표 POSTED<br/>원전표 REVERSED]
+    L --> K
 ```
 
 ## 실행
@@ -61,16 +63,18 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 | `POST /api/vouchers/draft` | 거래 설명으로 초안 생성과 판정. 저장하지 않음. 응답 `drafter` 필드가 `fixture`이면 실제 LLM 호출이 아님 |
 | `POST /api/vouchers` | 전표 저장. 판정 결과에 따라 DRAFT, REVIEW, REJECTED. FAIL도 기록으로 남김 |
 | `GET /api/vouchers/{id}`, `GET /api/vouchers?status=&month=` | 조회와 목록 |
-| `POST /api/vouchers/{id}/approve` | 재검증 뒤 승인과 전기. FAIL은 409, REVIEW는 사유가 없으면 409 |
+| `POST /api/vouchers/{id}/approve` | 재검증 뒤 승인과 전기. FAIL은 409, REVIEW는 사유가 없으면 409, 작성자가 자기 전표를 승인하면 R12로 409, 같은 전표를 동시에 승인하면 늦은 쪽이 409 |
+| `POST /api/vouchers/{id}/reverse` | 역분개. 전기된 전표의 차대를 뒤집은 전표를 만들어 바로 전기하고 원전표를 REVERSED로 바꾼다. 작성자, 승인자, 사유 필수 |
 | `POST /api/periods/{yyyymm}/close` | 기간 마감 |
 | `GET /api/reports/trial-balance?month=2026-10` | 월별 합계잔액시산표. `balanced` 필드로 총차변과 총대변 일치 여부 표시 |
 | `/actuator/health`, `/actuator/health/readiness`, `/actuator/health/liveness` | 상태 확인 |
+| `/actuator/prometheus` | 규칙별 사유 수와 판정 수 카운터 |
 
 요청과 응답 예시는 [docs/api.md](docs/api.md)에 있습니다.
 
 ## 규칙
 
-규칙은 `ValidationRule` 인터페이스를 구현한 독립 클래스 11개입니다. 엔진은 코드 순으로 모든 규칙을 끝까지 실행해 사유를 전부 모으고, FAIL이 하나라도 있으면 FAIL, 없고 REVIEW가 있으면 REVIEW, 둘 다 없으면 PASS로 판정합니다.
+규칙은 `ValidationRule` 인터페이스를 구현한 독립 클래스 12개입니다. 엔진은 코드 순으로 모든 규칙을 끝까지 실행해 사유를 전부 모으고, FAIL이 하나라도 있으면 FAIL, 없고 REVIEW가 있으면 REVIEW, 둘 다 없으면 PASS로 판정합니다. 승인 단계에서는 저장 단계의 규칙을 모두 다시 돌리고 R12를 더합니다. 역분개 전표에는 R05와 R10을 적용하지 않습니다.
 
 | 코드 | 이름 | 판정 | 내용 | 근거 |
 |---|---|---|---|---|
@@ -85,8 +89,9 @@ SPRING_DATASOURCE_USERNAME=ledger SPRING_DATASOURCE_PASSWORD=ledger \
 | R09 | ENTERTAINMENT_EVIDENCE | REVIEW | 기업업무추진비 3만원 초과인데 증빙이 없으면 검토 | 법인세법 제25조 제2항, 시행령 제41조(확인 필요) |
 | R10 | DUPLICATE_SUSPECT | REVIEW | 같은 일자, 거래처, 총액의 전표가 이미 있으면 검토 | 이중 기표 방지 |
 | R11 | DRAFT_SCHEMA | FAIL | 초안 단계에서 라인 2개 이상, 필수 필드 확인. 초안 생성 실패도 여기서 FAIL | 초안 스키마 |
+| R12 | PREPARER_NOT_APPROVER | FAIL | 승인 단계에서 전표 작성자와 승인자가 같으면 안 됨 | 내부통제 직무 분리 |
 
-규칙별 입력, 판정, 예시는 [docs/rules.md](docs/rules.md)에 있습니다. 세법 조문 번호는 작성자가 다시 확인해야 하며, 확신이 없는 곳은 "확인 필요"로 표시했습니다.
+규칙별 입력, 판정, 예시는 [docs/rules.md](docs/rules.md)에 있습니다. 세법 조문 번호는 작성자가 다시 확인해야 하며, 확신이 없는 곳은 "확인 필요"로 표시했습니다. 조문 원문을 읽어 대조한 메모는 [docs/legal-basis.md](docs/legal-basis.md)에 있고, 표시를 닫을지는 작성자가 정합니다.
 
 ## 검증
 
@@ -111,17 +116,19 @@ GitHub Actions는 push와 PR마다 `./gradlew test`와 `docker build`를 실행�
 - 실제 LLM을 호출하지 않았습니다. 기본 작성기는 `src/main/resources/drafts/*.json`의 고정 초안을 거래 설명 키워드로 고르는 fixture입니다. OpenAI 작성기는 `OPENAI_API_KEY`가 있을 때만 활성화되며 이번 작업에서는 키가 없어 호출하지 않았습니다.
 - 규칙은 형식과 금액만 봅니다. 비품 구입을 소모품비로 적거나 매출을 잡이익으로 적은 전표는 통과합니다. 이 한계는 `semantic_misses.json` 5건과 테스트로 고정해 두었습니다.
 - 기업업무추진비처럼 매입세액이 공제되지 않는 거래는 자동으로 가려내지 않습니다. 총액을 비용으로 적고 `vatType`을 `NA`로 두는 방식으로만 표현할 수 있습니다.
-- 세법 조문 번호는 작성자가 직접 확인해야 합니다. 확신이 없는 곳은 코드와 문서에 "확인 필요"로 표시했습니다.
-- 단일 사용자 전제이며 인증과 권한이 없습니다. 승인자 이름은 요청 본문의 문자열일 뿐입니다.
+- 세법 조문 번호는 작성자가 직접 확인해야 합니다. 확신이 없는 곳은 코드와 문서에 "확인 필요"로 표시했습니다. 조문을 읽어 보니 원 미만 버림의 근거로 적은 국고금관리법 제47조는 세금계산서 세액 절사를 직접 정한 조문이 아닐 가능성이 커서, 작성자가 근거를 다시 찾아야 합니다([docs/legal-basis.md](docs/legal-basis.md)).
+- 인증과 권한이 없습니다. 작성자와 승인자는 요청 본문의 문자열이라 R12의 직무 분리는 이름만 바꿔 적으면 우회됩니다. 인증과 역할을 붙이는 것이 다음 단계입니다.
 - 시산표는 해당 월에 전기된 원장 항목만 집계합니다. 이월 잔액과 누적 잔액은 다루지 않습니다.
-- 전표 수정과 삭제, 역분개, 다중 통화, 결산 분개는 없습니다.
-- 테스트는 H2를 PostgreSQL 모드로 사용합니다. PostgreSQL 고유 동작은 compose 실행으로만 확인했습니다.
+- 전표 수정과 삭제, 다중 통화, 결산 분개는 없습니다. 틀린 전기는 역분개로만 되돌립니다.
+- 경조금의 20만원 기준, 법인 명의 카드 여부, 면세 거래에 세금계산서가 붙은 조합은 규칙이 보지 않습니다([docs/rules.md](docs/rules.md)의 "규칙이 보지 않는 것").
+- 테스트는 H2를 PostgreSQL 모드로 사용합니다. PostgreSQL 고유 동작은 compose와 kind 실행으로만 확인했습니다.
 
 ## 작업 문서
 
 - [규칙 상세](docs/rules.md)
 - [설계 결정 로그](docs/decisions.md)
-- [골든셋 평가 결과와 재현 명령](docs/evaluation.md)
+- [골든셋과 변이 평가 결과, compose와 kind 실측, 재현 명령](docs/evaluation.md)
+- [세법 조문 조회 메모](docs/legal-basis.md)
 - [계층 구조와 ERD](docs/architecture.md)
 - [API 예시](docs/api.md)
 
